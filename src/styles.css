@@ -218,12 +218,26 @@ h2 {
   width: 42px;
 }
 
+.icon-button.selected {
+  border-color: #0b867c;
+  background: #dff9f5;
+  color: #09675f;
+}
+
 .primary-button {
   padding: 0 16px;
   background: #172026;
   color: #fff;
   border-color: #172026;
   font-weight: 800;
+}
+
+.save-state {
+  margin: 10px 0 0;
+  color: #5f6d76;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .summary-strip {
@@ -339,6 +353,22 @@ input:focus {
 .artifact {
   display: grid;
   gap: 16px;
+}
+
+.schema-card {
+  display: grid;
+  gap: 16px;
+}
+
+.schema-title {
+  border-radius: 8px;
+  background: #edf3f6;
+  color: #172026;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 900;
 }
 
 .quality-score {

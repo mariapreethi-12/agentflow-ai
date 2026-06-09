@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   AlertTriangle,
@@ -7,21 +7,33 @@ import {
   ClipboardCheck,
   Code2,
   Database,
+  FileJson,
   FileText,
   GitBranch,
   LayoutDashboard,
   Play,
   RefreshCcw,
+  Save,
   ShieldCheck,
   Sparkles,
   TestTube2,
   UserCheck,
 } from "lucide-react";
+import {
+  artifactSchemas,
+  createInitialProject,
+  demoQuestions,
+  flattenArtifact,
+  generateArtifacts,
+} from "./agentSchemas";
 import "./styles.css";
+
+const storageKey = "agentflow.currentProject.v1";
 
 const stages = [
   {
     id: "intake",
+    artifactKey: "clarifying_questions",
     label: "Idea Intake",
     agent: "PM Agent",
     icon: FileText,
@@ -29,6 +41,7 @@ const stages = [
   },
   {
     id: "prd",
+    artifactKey: "prd",
     label: "PRD",
     agent: "Product Manager",
     icon: ClipboardCheck,
@@ -36,6 +49,7 @@ const stages = [
   },
   {
     id: "architecture",
+    artifactKey: "architecture",
     label: "Architecture",
     agent: "Architect Agent",
     icon: Database,
@@ -43,6 +57,7 @@ const stages = [
   },
   {
     id: "backend",
+    artifactKey: "backend_plan",
     label: "Backend Code",
     agent: "Backend Agent",
     icon: Code2,
@@ -50,6 +65,7 @@ const stages = [
   },
   {
     id: "qa",
+    artifactKey: "qa_plan",
     label: "QA Plan",
     agent: "QA Agent",
     icon: TestTube2,
@@ -57,6 +73,7 @@ const stages = [
   },
   {
     id: "review",
+    artifactKey: "review_report",
     label: "Review",
     agent: "Reviewer Agent",
     icon: ShieldCheck,
@@ -64,106 +81,107 @@ const stages = [
   },
 ];
 
-const demoIdea =
-  "Build an appointment booking system for a dental clinic with patients, dentists, availability slots, reminders, and admin approval.";
-
-const questionBank = [
-  "Who can create appointments: patients only, staff only, or both?",
-  "Should dentists define availability manually or sync it from a calendar?",
-  "Do appointments need payment before confirmation?",
-  "What reminder channels are required: email, SMS, or both?",
-  "Can admins override booking conflicts in emergencies?",
-];
-
-const artifacts = {
-  prd: {
-    title: "Generated PRD",
-    score: 91,
-    body: [
-      "Goal: let patients request dental appointments while admins manage dentist availability and booking approvals.",
-      "Primary users: patients, clinic admins, dentists.",
-      "Core user stories: book appointment, cancel appointment, manage availability, review pending bookings, send reminders.",
-      "Acceptance criteria: prevent double-booking, validate patient contact info, show available time slots, record approval history.",
-    ],
-  },
-  architecture: {
-    title: "Architecture Output",
-    score: 88,
-    body: [
-      "Tables: users, patients, dentists, availability_slots, appointments, reminders, audit_events.",
-      "API routes: POST /appointments, GET /availability, PATCH /appointments/:id/status, POST /reminders/test.",
-      "Services: scheduling validator, reminder dispatcher, admin approval workflow, audit logger.",
-      "Approval gate: human reviews schema and route contract before code generation.",
-    ],
-  },
-  backend: {
-    title: "Backend Code Plan",
-    score: 84,
-    body: [
-      "FastAPI routers for appointments, availability, auth placeholder, and admin review.",
-      "SQLAlchemy models with appointment status enum: pending, approved, cancelled, completed.",
-      "Validation checks for duplicate appointments, missing patient details, unavailable slots, and past dates.",
-      "Generated files preview: app/main.py, app/models.py, app/routes/appointments.py, app/services/scheduling.py.",
-    ],
-  },
-  qa: {
-    title: "QA Test Cases",
-    score: 89,
-    body: [
-      "Test booking succeeds when a dentist has an open slot.",
-      "Test booking fails when another appointment already owns that slot.",
-      "Test invalid phone and email inputs return validation errors.",
-      "Manual QA: create patient, request booking, approve as admin, confirm reminder event is logged.",
-    ],
-  },
-  review: {
-    title: "Reviewer Report",
-    score: 82,
-    body: [
-      "Strength: clear approval gates and practical API boundaries.",
-      "Risk: auth is still a placeholder; do not expose admin actions without role checks.",
-      "Risk: reminders need retry handling and delivery status tracking.",
-      "Recommendation: add rate limits to appointment creation before public demo.",
-    ],
-  },
-};
+function loadProject() {
+  try {
+    const saved = localStorage.getItem(storageKey);
+    return saved ? JSON.parse(saved) : createInitialProject();
+  } catch {
+    return createInitialProject();
+  }
+}
 
 function App() {
-  const [idea, setIdea] = useState(demoIdea);
-  const [activeStage, setActiveStage] = useState("intake");
-  const [approved, setApproved] = useState(["intake"]);
-  const [answers, setAnswers] = useState({
-    0: "Both patients and staff can create appointments.",
-    1: "Admins define availability manually for the MVP.",
-    2: "No payment in MVP.",
-    3: "Email reminders first.",
-    4: "Admins can override conflicts with an audit reason.",
-  });
+  const [project, setProject] = useState(loadProject);
+  const [showSchema, setShowSchema] = useState(false);
 
-  const activeIndex = stages.findIndex((stage) => stage.id === activeStage);
-  const progress = Math.round(((approved.length - 1) / (stages.length - 1)) * 100);
+  useEffect(() => {
+    localStorage.setItem(storageKey, JSON.stringify(project));
+  }, [project]);
 
-  const currentArtifact = useMemo(() => {
-    if (activeStage === "intake") return null;
-    return artifacts[activeStage];
-  }, [activeStage]);
+  const activeIndex = stages.findIndex((stage) => stage.id === project.activeStage);
+  const activeStage = stages[activeIndex] || stages[0];
+  const approvedIds = Object.entries(project.approvals)
+    .filter(([, approval]) => approval.approved)
+    .map(([id]) => id);
+  const progress = Math.round(((approvedIds.length - 1) / (stages.length - 1)) * 100);
+  const currentArtifact = project.artifacts[activeStage.artifactKey];
+  const schema = artifactSchemas[activeStage.artifactKey];
+  const openRisks = project.artifacts.review_report.data.risks.length;
+
+  const lastSaved = useMemo(
+    () =>
+      new Intl.DateTimeFormat("en", {
+        hour: "numeric",
+        minute: "2-digit",
+        month: "short",
+        day: "numeric",
+      }).format(new Date(project.updatedAt)),
+    [project.updatedAt]
+  );
+
+  function updateProject(updater) {
+    setProject((current) => ({
+      ...updater(current),
+      updatedAt: new Date().toISOString(),
+    }));
+  }
+
+  function updateIdea(value) {
+    updateProject((current) => ({
+      ...current,
+      idea: value,
+      artifacts: generateArtifacts(value, current.answers),
+    }));
+  }
+
+  function updateAnswer(index, value) {
+    updateProject((current) => {
+      const answers = { ...current.answers, [index]: value };
+      return {
+        ...current,
+        answers,
+        artifacts: generateArtifacts(current.idea, answers),
+      };
+    });
+  }
+
+  function setActiveStage(stageId) {
+    updateProject((current) => ({
+      ...current,
+      activeStage: stageId,
+    }));
+  }
 
   function approveCurrentStage() {
     const current = stages[activeIndex];
     const next = stages[activeIndex + 1];
-    setApproved((items) =>
-      items.includes(current.id) ? items : [...items, current.id]
-    );
-    if (next) {
-      setApproved((items) => (items.includes(next.id) ? items : [...items, next.id]));
-      setActiveStage(next.id);
-    }
+
+    updateProject((existing) => ({
+      ...existing,
+      activeStage: next ? next.id : existing.activeStage,
+      approvals: {
+        ...existing.approvals,
+        [current.id]: {
+          approved: true,
+          approvedAt: new Date().toISOString(),
+          note: current.decision,
+        },
+        ...(next && !existing.approvals[next.id]
+          ? {
+              [next.id]: {
+                approved: false,
+                approvedAt: null,
+                note: "Waiting for human approval.",
+              },
+            }
+          : {}),
+      },
+    }));
   }
 
   function resetDemo() {
-    setIdea(demoIdea);
-    setActiveStage("intake");
-    setApproved(["intake"]);
+    setProject(createInitialProject());
+    setShowSchema(false);
   }
 
   return (
@@ -182,8 +200,8 @@ function App() {
         <nav className="stage-list" aria-label="Agent workflow">
           {stages.map((stage, index) => {
             const Icon = stage.icon;
-            const isActive = stage.id === activeStage;
-            const isApproved = approved.includes(stage.id);
+            const isActive = stage.id === activeStage.id;
+            const isApproved = approvedIds.includes(stage.id);
             return (
               <button
                 className={`stage-button ${isActive ? "active" : ""}`}
@@ -218,12 +236,23 @@ function App() {
       <section className="workspace">
         <header className="topbar">
           <div>
-            <p className="eyebrow">MVP build</p>
-            <h1>Dental clinic booking workflow</h1>
+            <p className="eyebrow">Saved project</p>
+            <h1>{project.name}</h1>
+            <p className="save-state">
+              <Save size={15} />
+              Saved locally at {lastSaved}
+            </p>
           </div>
           <div className="topbar-actions">
             <button className="icon-button" onClick={resetDemo} title="Reset demo">
               <RefreshCcw size={18} />
+            </button>
+            <button
+              className={`icon-button ${showSchema ? "selected" : ""}`}
+              onClick={() => setShowSchema((visible) => !visible)}
+              title="Toggle artifact schema"
+            >
+              <FileJson size={18} />
             </button>
             <button className="primary-button" onClick={approveCurrentStage}>
               <UserCheck size={18} />
@@ -235,8 +264,8 @@ function App() {
         <section className="summary-strip">
           <Metric icon={LayoutDashboard} label="Agents" value="6" />
           <Metric icon={UserCheck} label="Approval gates" value="5" />
-          <Metric icon={Sparkles} label="Artifacts" value="PRD/API/QA" />
-          <Metric icon={AlertTriangle} label="Open risks" value="2" />
+          <Metric icon={Sparkles} label="Schemas" value={Object.keys(artifactSchemas).length} />
+          <Metric icon={AlertTriangle} label="Open risks" value={openRisks} />
         </section>
 
         <div className="content-grid">
@@ -246,24 +275,22 @@ function App() {
                 <p className="eyebrow">Product owner input</p>
                 <h2>Idea and clarifying answers</h2>
               </div>
-              <span className="status-pill">Editable</span>
+              <span className="status-pill">Auto-saved</span>
             </div>
             <label>
               Product idea
-              <textarea value={idea} onChange={(event) => setIdea(event.target.value)} />
+              <textarea
+                value={project.idea}
+                onChange={(event) => updateIdea(event.target.value)}
+              />
             </label>
             <div className="questions">
-              {questionBank.map((question, index) => (
+              {demoQuestions.map((question, index) => (
                 <label key={question}>
                   {question}
                   <input
-                    value={answers[index] || ""}
-                    onChange={(event) =>
-                      setAnswers((current) => ({
-                        ...current,
-                        [index]: event.target.value,
-                      }))
-                    }
+                    value={project.answers[index] || ""}
+                    onChange={(event) => updateAnswer(index, event.target.value)}
                   />
                 </label>
               ))}
@@ -273,27 +300,22 @@ function App() {
           <section className="panel artifact-panel">
             <div className="panel-header">
               <div>
-                <p className="eyebrow">
-                  {stages[activeIndex].agent} output
-                </p>
-                <h2>{currentArtifact ? currentArtifact.title : "Clarifying Questions"}</h2>
+                <p className="eyebrow">{schema.agent} output</p>
+                <h2>{currentArtifact.title}</h2>
               </div>
-              <span className="status-pill approved">
-                {approved.includes(activeStage) ? "Ready" : "Pending"}
+              <span
+                className={`status-pill ${
+                  approvedIds.includes(activeStage.id) ? "approved" : ""
+                }`}
+              >
+                {approvedIds.includes(activeStage.id) ? "Approved" : "Pending"}
               </span>
             </div>
 
-            {currentArtifact ? (
-              <Artifact artifact={currentArtifact} />
+            {showSchema ? (
+              <SchemaCard artifactKey={activeStage.artifactKey} schema={schema} />
             ) : (
-              <div className="question-preview">
-                {questionBank.map((question) => (
-                  <div className="output-line" key={question}>
-                    <ChevronRight size={16} />
-                    <span>{question}</span>
-                  </div>
-                ))}
-              </div>
+              <Artifact artifact={currentArtifact} />
             )}
           </section>
         </div>
@@ -301,8 +323,8 @@ function App() {
         <section className="timeline">
           {stages.map((stage) => {
             const Icon = stage.icon;
-            const isActive = stage.id === activeStage;
-            const isApproved = approved.includes(stage.id);
+            const isActive = stage.id === activeStage.id;
+            const isApproved = approvedIds.includes(stage.id);
             return (
               <button
                 key={stage.id}
@@ -340,15 +362,43 @@ function Artifact({ artifact }) {
         <strong>{artifact.score}</strong>
       </div>
       <div className="output-list">
-        {artifact.body.map((item) => (
-          <div className="output-line" key={item}>
+        {flattenArtifact(artifact).map((item) => (
+          <div className="output-line" key={item.field}>
             <Play size={14} />
-            <span>{item}</span>
+            <span>
+              <strong>{formatField(item.field)}:</strong> {item.value}
+            </span>
           </div>
         ))}
       </div>
     </div>
   );
+}
+
+function SchemaCard({ artifactKey, schema }) {
+  return (
+    <div className="schema-card">
+      <div className="schema-title">
+        <FileJson size={20} />
+        <span>{artifactKey}</span>
+      </div>
+      <div className="output-list">
+        {schema.fields.map((field) => (
+          <div className="output-line" key={field}>
+            <ChevronRight size={16} />
+            <span>{field}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function formatField(value) {
+  return value
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }
 
 createRoot(document.getElementById("root")).render(<App />);
