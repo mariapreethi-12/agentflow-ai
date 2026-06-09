@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.openai_agents import is_openai_configured, openai_model_name
 from app.schemas import ApprovalRequest, Project, ProjectCreate, ProjectListItem, ProjectUpdate
 from app.store import store
 
@@ -28,6 +29,15 @@ app.add_middleware(
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/ai/status")
+def ai_status() -> dict[str, str | bool]:
+    return {
+        "provider": "openai" if is_openai_configured() else "fallback",
+        "openai_configured": is_openai_configured(),
+        "model": openai_model_name(),
+    }
 
 
 @app.get("/projects", response_model=list[ProjectListItem])

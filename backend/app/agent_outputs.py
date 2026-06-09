@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from typing import Any
 
+from app.openai_agents import generate_pm_prd_with_openai
 from app.schemas import Artifact
 
 
@@ -17,45 +18,64 @@ def generate_artifacts(idea: str, answers: dict[int, str]) -> dict[str, Artifact
     answer_list = [answer for answer in answers.values() if answer]
     reminder_choice = _find_answer(answer_list, "reminder")
     payment_choice = _find_answer(answer_list, "payment")
+    pm_prd_output = generate_pm_prd_with_openai(idea, answers)
+    clarifying_data = (
+        {
+            **pm_prd_output["clarifying_questions"],
+            "generation_source": "openai",
+        }
+        if pm_prd_output
+        else {
+            "questions": DEMO_QUESTIONS,
+            "assumptions": [
+                "The MVP focuses on one clinic location.",
+                "Role-based access can start with patient and admin users.",
+                "Dentist availability is managed inside the generated app.",
+            ],
+            "decision_required": "Confirm who can book and how reminders should work.",
+            "generation_source": "fallback",
+        }
+    )
+    prd_data = (
+        {
+            **pm_prd_output["prd"],
+            "generation_source": "openai",
+        }
+        if pm_prd_output
+        else {
+            "goal": "Let patients request dental appointments while admins manage dentist availability and booking approvals.",
+            "users": ["Patients", "Clinic admins", "Dentists"],
+            "user_stories": [
+                "As a patient, I can request an appointment from available dentist slots.",
+                "As an admin, I can approve, reject, or reschedule pending appointments.",
+                "As a dentist, I can see my upcoming appointments and availability.",
+            ],
+            "acceptance_criteria": [
+                "The system prevents double-booking for the same dentist and time slot.",
+                "Patients must provide valid contact details before requesting an appointment.",
+                "Every approval or override is recorded in an audit trail.",
+            ],
+            "scope_notes": [
+                idea,
+                reminder_choice or "Email reminders are included in the MVP.",
+                payment_choice or "Payments stay out of scope for the first build.",
+            ],
+            "generation_source": "fallback",
+        }
+    )
 
     return {
         "clarifying_questions": _artifact(
             "clarifying_questions",
             "Clarifying Questions",
-            94,
-            {
-                "questions": DEMO_QUESTIONS,
-                "assumptions": [
-                    "The MVP focuses on one clinic location.",
-                    "Role-based access can start with patient and admin users.",
-                    "Dentist availability is managed inside the generated app.",
-                ],
-                "decision_required": "Confirm who can book and how reminders should work.",
-            },
+            96 if pm_prd_output else 94,
+            clarifying_data,
         ),
         "prd": _artifact(
             "prd",
             "Generated PRD",
-            91,
-            {
-                "goal": "Let patients request dental appointments while admins manage dentist availability and booking approvals.",
-                "users": ["Patients", "Clinic admins", "Dentists"],
-                "user_stories": [
-                    "As a patient, I can request an appointment from available dentist slots.",
-                    "As an admin, I can approve, reject, or reschedule pending appointments.",
-                    "As a dentist, I can see my upcoming appointments and availability.",
-                ],
-                "acceptance_criteria": [
-                    "The system prevents double-booking for the same dentist and time slot.",
-                    "Patients must provide valid contact details before requesting an appointment.",
-                    "Every approval or override is recorded in an audit trail.",
-                ],
-                "scope_notes": [
-                    idea,
-                    reminder_choice or "Email reminders are included in the MVP.",
-                    payment_choice or "Payments stay out of scope for the first build.",
-                ],
-            },
+            93 if pm_prd_output else 91,
+            prd_data,
         ),
         "architecture": _artifact(
             "architecture",

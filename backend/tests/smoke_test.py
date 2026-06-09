@@ -15,6 +15,10 @@ def main() -> None:
     assert health.status_code == 200
     assert health.json() == {"status": "ok"}
 
+    ai_status = client.get("/ai/status")
+    assert ai_status.status_code == 200
+    assert "openai_configured" in ai_status.json()
+
     created = client.post(
         "/projects",
         json={
