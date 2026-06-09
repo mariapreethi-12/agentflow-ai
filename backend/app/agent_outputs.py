@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Any
 
-from app.openai_agents import generate_pm_prd_with_openai
+from app.openai_agents import generate_architecture_with_openai, generate_pm_prd_with_openai
 from app.schemas import Artifact
 
 
@@ -63,6 +63,39 @@ def generate_artifacts(idea: str, answers: dict[int, str]) -> dict[str, Artifact
             "generation_source": "fallback",
         }
     )
+    architecture_output = generate_architecture_with_openai(idea, answers, prd_data)
+    architecture_data = (
+        {
+            **architecture_output,
+            "generation_source": "openai",
+        }
+        if architecture_output
+        else {
+            "tables": [
+                "users",
+                "patients",
+                "dentists",
+                "availability_slots",
+                "appointments",
+                "reminders",
+                "audit_events",
+            ],
+            "api_routes": [
+                "POST /appointments",
+                "GET /availability",
+                "PATCH /appointments/:id/status",
+                "POST /reminders/test",
+            ],
+            "services": [
+                "Scheduling validator",
+                "Reminder dispatcher",
+                "Admin approval workflow",
+                "Audit logger",
+            ],
+            "approval_gate": "Human reviews schema and route contract before code generation.",
+            "generation_source": "fallback",
+        }
+    )
 
     return {
         "clarifying_questions": _artifact(
@@ -80,31 +113,8 @@ def generate_artifacts(idea: str, answers: dict[int, str]) -> dict[str, Artifact
         "architecture": _artifact(
             "architecture",
             "Architecture Output",
-            88,
-            {
-                "tables": [
-                    "users",
-                    "patients",
-                    "dentists",
-                    "availability_slots",
-                    "appointments",
-                    "reminders",
-                    "audit_events",
-                ],
-                "api_routes": [
-                    "POST /appointments",
-                    "GET /availability",
-                    "PATCH /appointments/:id/status",
-                    "POST /reminders/test",
-                ],
-                "services": [
-                    "Scheduling validator",
-                    "Reminder dispatcher",
-                    "Admin approval workflow",
-                    "Audit logger",
-                ],
-                "approval_gate": "Human reviews schema and route contract before code generation.",
-            },
+            92 if architecture_output else 88,
+            architecture_data,
         ),
         "backend_plan": _artifact(
             "backend_plan",

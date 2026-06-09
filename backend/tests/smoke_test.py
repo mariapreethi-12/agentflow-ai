@@ -30,6 +30,8 @@ def main() -> None:
     project = created.json()
     assert project["active_stage"] == "intake"
     assert "prd" in project["artifacts"]
+    assert "architecture" in project["artifacts"]
+    assert "tables" in project["artifacts"]["architecture"]["data"]
 
     approved = client.post(
         f"/projects/{project['id']}/approve",
