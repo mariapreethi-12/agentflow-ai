@@ -1,5 +1,8 @@
 node_modules/
 dist/
+backend/.venv/
+__pycache__/
+*.pyc
 .env
 .env.local
 *.log

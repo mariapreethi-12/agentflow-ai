@@ -16,18 +16,43 @@ The MVP focuses on a clear recruiter-friendly demo: a dental clinic appointment 
 
 ## Tech Stack
 
-- React
+- React frontend
 - Vite
+- FastAPI backend
+- Pydantic schemas
 - TypeScript-ready JavaScript
 - Lucide icons
-- Future backend target: FastAPI, PostgreSQL, LangGraph, OpenAI API
+- Future targets: PostgreSQL, LangGraph, OpenAI API
 
 ## Run Locally
+
+Frontend:
 
 ```bash
 npm install
 npm run dev
 ```
+
+Backend:
+
+```bash
+cd backend
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+API docs open at `http://127.0.0.1:8000/docs`.
+
+## API Contract
+
+- `GET /health`
+- `GET /projects`
+- `POST /projects`
+- `GET /projects/{project_id}`
+- `PATCH /projects/{project_id}`
+- `POST /projects/{project_id}/approve`
 
 ## Portfolio Angle
 
