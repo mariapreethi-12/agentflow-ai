@@ -45,6 +45,8 @@ uvicorn app.main:app --reload --port 8000
 
 API docs open at `http://127.0.0.1:8000/docs`.
 
+The frontend connects to the FastAPI backend at `http://127.0.0.1:8000` by default. If the backend is not running, the UI falls back to local storage so the demo still works.
+
 ## API Contract
 
 - `GET /health`

@@ -240,6 +240,35 @@ h2 {
   gap: 6px;
 }
 
+.api-state {
+  margin: 8px 0 0;
+  color: #5f6d76;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+}
+
+.api-state span {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #8aa0ab;
+}
+
+.api-state.online span {
+  background: #0b867c;
+}
+
+.api-state.saving span,
+.api-state.connecting span {
+  background: #d58b16;
+}
+
+.api-state.local span {
+  background: #b94646;
+}
+
 .summary-strip {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

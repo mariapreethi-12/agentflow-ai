@@ -26,6 +26,7 @@ import {
   flattenArtifact,
   generateArtifacts,
 } from "./agentSchemas";
+import { agentFlowApi } from "./api";
 import "./styles.css";
 
 const storageKey = "agentflow.currentProject.v1";
@@ -93,10 +94,48 @@ function loadProject() {
 function App() {
   const [project, setProject] = useState(loadProject);
   const [showSchema, setShowSchema] = useState(false);
+  const [syncState, setSyncState] = useState({
+    mode: "local",
+    label: "Local mode",
+  });
 
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(project));
   }, [project]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function connectBackend() {
+      setSyncState({ mode: "connecting", label: "Connecting API" });
+      try {
+        await agentFlowApi.health();
+        const backendProject = project.backendProjectId
+          ? await agentFlowApi.getProject(project.backendProjectId).catch(() => null)
+          : null;
+        const syncedProject =
+          backendProject || (await agentFlowApi.createProject(project));
+
+        if (!cancelled) {
+          setProject((current) => ({
+            ...syncedProject,
+            activeStage: current.activeStage || syncedProject.activeStage,
+          }));
+          setSyncState({ mode: "online", label: "API connected" });
+        }
+      } catch {
+        if (!cancelled) {
+          setSyncState({ mode: "local", label: "Local fallback" });
+        }
+      }
+    }
+
+    connectBackend();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const activeIndex = stages.findIndex((stage) => stage.id === project.activeStage);
   const activeStage = stages[activeIndex] || stages[0];
@@ -119,15 +158,8 @@ function App() {
     [project.updatedAt]
   );
 
-  function updateProject(updater) {
-    setProject((current) => ({
-      ...updater(current),
-      updatedAt: new Date().toISOString(),
-    }));
-  }
-
   function updateIdea(value) {
-    updateProject((current) => ({
+    commitProject((current) => ({
       ...current,
       idea: value,
       artifacts: generateArtifacts(value, current.answers),
@@ -135,7 +167,7 @@ function App() {
   }
 
   function updateAnswer(index, value) {
-    updateProject((current) => {
+    commitProject((current) => {
       const answers = { ...current.answers, [index]: value };
       return {
         ...current,
@@ -146,7 +178,7 @@ function App() {
   }
 
   function setActiveStage(stageId) {
-    updateProject((current) => ({
+    commitProject((current) => ({
       ...current,
       activeStage: stageId,
     }));
@@ -156,7 +188,7 @@ function App() {
     const current = stages[activeIndex];
     const next = stages[activeIndex + 1];
 
-    updateProject((existing) => ({
+    commitProject((existing) => ({
       ...existing,
       activeStage: next ? next.id : existing.activeStage,
       approvals: {
@@ -176,12 +208,73 @@ function App() {
             }
           : {}),
       },
-    }));
+    }), {
+      approval: {
+        stage: current.id,
+        note: current.decision,
+      },
+    });
   }
 
   function resetDemo() {
-    setProject(createInitialProject());
+    const nextProject = createInitialProject();
+    setProject(nextProject);
     setShowSchema(false);
+    queueMicrotask(() => createBackendProject(nextProject));
+  }
+
+  function commitProject(updater, options = {}) {
+    setProject((current) => {
+      const next = {
+        ...updater(current),
+        updatedAt: new Date().toISOString(),
+      };
+      queueMicrotask(() => syncProject(next, options));
+      return next;
+    });
+  }
+
+  async function syncProject(nextProject, options = {}) {
+    if (!nextProject.backendProjectId) {
+      await createBackendProject(nextProject);
+      return;
+    }
+
+    try {
+      setSyncState({ mode: "saving", label: "Saving to API" });
+
+      let synced = nextProject;
+      if (options.approval) {
+        await agentFlowApi.approveStage(
+          nextProject.backendProjectId,
+          options.approval.stage,
+          options.approval.note
+        );
+      }
+
+      synced = await agentFlowApi.updateProject(nextProject.backendProjectId, nextProject);
+      setProject((current) => ({
+        ...synced,
+        activeStage: current.activeStage,
+      }));
+      setSyncState({ mode: "online", label: "API synced" });
+    } catch {
+      setSyncState({ mode: "local", label: "Local fallback" });
+    }
+  }
+
+  async function createBackendProject(nextProject) {
+    try {
+      setSyncState({ mode: "saving", label: "Creating API project" });
+      const synced = await agentFlowApi.createProject(nextProject);
+      setProject((current) => ({
+        ...synced,
+        activeStage: current.activeStage,
+      }));
+      setSyncState({ mode: "online", label: "API connected" });
+    } catch {
+      setSyncState({ mode: "local", label: "Local fallback" });
+    }
   }
 
   return (
@@ -241,6 +334,10 @@ function App() {
             <p className="save-state">
               <Save size={15} />
               Saved locally at {lastSaved}
+            </p>
+            <p className={`api-state ${syncState.mode}`}>
+              <span />
+              {syncState.label}
             </p>
           </div>
           <div className="topbar-actions">
