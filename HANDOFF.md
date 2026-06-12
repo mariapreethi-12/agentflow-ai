@@ -7,7 +7,7 @@ Last updated: 2026-06-09
 - GitHub: https://github.com/mariapreethi-12/agentflow-ai.git
 - Local path: `C:\Users\maria\OneDrive\Documents\New project\agentflow-ai`
 - Branch: `main`
-- Latest pushed commit: `4dab919 Add OpenAI architect agent`
+- Latest pushed commit at previous handoff: `4dab919 Add OpenAI architect agent`
 - Working tree status at handoff: clean, `main...origin/main`
 
 ## Project Goal
@@ -28,6 +28,7 @@ Completed:
 - Structured artifact schemas.
 - OpenAI-backed PM/PRD Agent.
 - OpenAI-backed Architect Agent.
+- OpenAI-backed Backend Code Plan Agent.
 - Deterministic fallback artifacts when OpenAI is unavailable.
 - Backend smoke test.
 - GitHub repo initialized and pushed.
@@ -42,10 +43,14 @@ Current real OpenAI agents:
   - Generates REST API routes.
   - Generates backend services.
   - Generates a human approval gate.
+- Backend Code Plan Agent:
+  - Generates FastAPI framework and persistence notes.
+  - Generates planned backend file paths.
+  - Generates validation rules.
+  - Generates implementation notes.
 
 Not completed yet:
 
-- Backend Code Agent.
 - QA Agent.
 - Reviewer Agent with real OpenAI output.
 - PostgreSQL persistence.
@@ -64,7 +69,7 @@ Not completed yet:
 - `backend/app/schemas.py`: Pydantic models.
 - `backend/app/store.py`: in-memory project store.
 - `backend/app/agent_outputs.py`: artifact generation coordinator.
-- `backend/app/openai_agents.py`: OpenAI Responses API integrations for PM/PRD and Architect agents.
+- `backend/app/openai_agents.py`: OpenAI Responses API integrations for PM/PRD, Architect, and Backend Code Plan agents.
 - `backend/tests/smoke_test.py`: backend route smoke test.
 - `backend/.env.example`: environment variable template.
 
@@ -132,11 +137,12 @@ cd "C:\Users\maria\OneDrive\Documents\New project\agentflow-ai\backend"
 .venv\Scripts\python.exe -c "from pathlib import Path; import sys; sys.path.insert(0, str(Path.cwd())); from fastapi.testclient import TestClient; from app.main import app; c=TestClient(app); r=c.post('/projects', json={'idea':'Build an appointment booking system for a dental clinic with dentists, patients, reminders, and admin approval','answers':{'0':'Patients and staff can book','1':'Admins define availability','2':'No payment for MVP','3':'Email reminders','4':'Admins can override with audit reason'}}); data=r.json(); print('pm_source', data['artifacts']['prd']['data'].get('generation_source')); print('architecture_source', data['artifacts']['architecture']['data'].get('generation_source'))"
 ```
 
-Expected output:
+Expected output after the backend-code-agent milestone:
 
 ```text
 pm_source openai
 architecture_source openai
+backend_source openai
 ```
 
 If OpenAI is not configured or fails, expected fallback output:
@@ -178,19 +184,18 @@ architecture_source fallback
 
 ## Recommended Next Step
 
-Build the Backend Code Agent.
+Build the QA Agent.
 
 Suggested scope:
 
-- Add `BACKEND_CODE_SCHEMA` in `backend/app/openai_agents.py`.
-- Add `generate_backend_plan_with_openai(idea, answers, prd, architecture)`.
+- Add `QA_PLAN_SCHEMA` in `backend/app/openai_agents.py`.
+- Add `generate_qa_plan_with_openai(idea, answers, prd, architecture, backend_plan)`.
 - The output should include:
-  - `framework`
-  - `files`
-  - `validation_rules`
-  - `implementation_notes`
-  - optional `code_snippets` if you want the demo to show real generated route/model snippets.
-- Wire it in `backend/app/agent_outputs.py` for the `backend_plan` artifact.
+  - `unit_tests`
+  - `api_tests`
+  - `edge_cases`
+  - `manual_checklist`
+- Wire it in `backend/app/agent_outputs.py` for the `qa_plan` artifact.
 - Add `generation_source`.
 - Update `backend/tests/smoke_test.py`.
 - Run `npm run build` and backend smoke test.
@@ -201,6 +206,5 @@ Suggested scope:
 Use this prompt:
 
 ```text
-Continue the AgentFlow project from C:\Users\maria\OneDrive\Documents\New project\agentflow-ai. Read HANDOFF.md first. The repo is pushed to https://github.com/mariapreethi-12/agentflow-ai.git on main. Do not expose or print the OpenAI API key. The next milestone is to add the OpenAI Backend Code Agent with structured output and deterministic fallback, then verify with frontend build and backend smoke test, commit, and push.
+Continue the AgentFlow project from C:\Users\maria\OneDrive\Documents\New project\agentflow-ai. Read HANDOFF.md first. The repo is pushed to https://github.com/mariapreethi-12/agentflow-ai.git on main. Do not expose or print the OpenAI API key. The next milestone is to add the OpenAI QA Agent with structured output and deterministic fallback, then verify with frontend build and backend smoke test, commit, and push.
 ```
-

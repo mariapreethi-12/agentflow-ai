@@ -47,7 +47,7 @@ API docs open at `http://127.0.0.1:8000/docs`.
 
 The frontend connects to the FastAPI backend at `http://127.0.0.1:8000` by default. If the backend is not running, the UI falls back to local storage so the demo still works.
 
-To enable real PM/PRD and Architecture generation, copy `backend/.env.example` to `backend/.env` and set `OPENAI_API_KEY`. Without a key, AgentFlow uses deterministic fallback artifacts.
+To enable real PM/PRD, Architecture, and Backend Code Plan generation, copy `backend/.env.example` to `backend/.env` and set `OPENAI_API_KEY`. Without a key, AgentFlow uses deterministic fallback artifacts.
 
 ## API Contract
 

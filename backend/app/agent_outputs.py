@@ -1,7 +1,11 @@
 from datetime import datetime, timezone
 from typing import Any
 
-from app.openai_agents import generate_architecture_with_openai, generate_pm_prd_with_openai
+from app.openai_agents import (
+    generate_architecture_with_openai,
+    generate_backend_plan_with_openai,
+    generate_pm_prd_with_openai,
+)
 from app.schemas import Artifact
 
 
@@ -96,6 +100,36 @@ def generate_artifacts(idea: str, answers: dict[int, str]) -> dict[str, Artifact
             "generation_source": "fallback",
         }
     )
+    backend_plan_output = generate_backend_plan_with_openai(
+        idea, answers, prd_data, architecture_data
+    )
+    backend_plan_data = (
+        {
+            **backend_plan_output,
+            "generation_source": "openai",
+        }
+        if backend_plan_output
+        else {
+            "framework": "FastAPI with SQLAlchemy and PostgreSQL",
+            "files": [
+                "app/main.py",
+                "app/models.py",
+                "app/routes/appointments.py",
+                "app/routes/availability.py",
+                "app/services/scheduling.py",
+            ],
+            "validation_rules": [
+                "Reject duplicate appointments for the same dentist and slot.",
+                "Reject appointments with missing patient contact details.",
+                "Reject bookings for past dates or unavailable slots.",
+            ],
+            "implementation_notes": [
+                "Use an appointment status enum: pending, approved, cancelled, completed.",
+                "Keep auth as a placeholder until the backend milestone.",
+            ],
+            "generation_source": "fallback",
+        }
+    )
 
     return {
         "clarifying_questions": _artifact(
@@ -119,26 +153,8 @@ def generate_artifacts(idea: str, answers: dict[int, str]) -> dict[str, Artifact
         "backend_plan": _artifact(
             "backend_plan",
             "Backend Code Plan",
-            84,
-            {
-                "framework": "FastAPI with SQLAlchemy and PostgreSQL",
-                "files": [
-                    "app/main.py",
-                    "app/models.py",
-                    "app/routes/appointments.py",
-                    "app/routes/availability.py",
-                    "app/services/scheduling.py",
-                ],
-                "validation_rules": [
-                    "Reject duplicate appointments for the same dentist and slot.",
-                    "Reject appointments with missing patient contact details.",
-                    "Reject bookings for past dates or unavailable slots.",
-                ],
-                "implementation_notes": [
-                    "Use an appointment status enum: pending, approved, cancelled, completed.",
-                    "Keep auth as a placeholder until the backend milestone.",
-                ],
-            },
+            91 if backend_plan_output else 84,
+            backend_plan_data,
         ),
         "qa_plan": _artifact(
             "qa_plan",

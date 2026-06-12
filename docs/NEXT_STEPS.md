@@ -2,26 +2,26 @@
 
 ## Immediate Next Milestone
 
-Add the OpenAI Backend Code Agent.
+Add the OpenAI QA Agent.
 
 Why this is next:
 
-- PM/PRD and Architect agents are already real OpenAI agents.
-- Backend Code Agent makes the workflow feel like a true software engineering team.
-- It is recruiter-visible because it can show planned FastAPI files, validation rules, and implementation notes.
+- PM/PRD, Architect, and Backend Code Plan agents are already real OpenAI agents.
+- QA Agent makes the workflow feel more production-minded.
+- It is recruiter-visible because it can show tests, edge cases, and manual QA checks.
 
 ## Implementation Plan
 
-1. Add `BACKEND_CODE_SCHEMA` to `backend/app/openai_agents.py`.
-2. Add `generate_backend_plan_with_openai(idea, answers, prd, architecture)`.
+1. Add `QA_PLAN_SCHEMA` to `backend/app/openai_agents.py`.
+2. Add `generate_qa_plan_with_openai(idea, answers, prd, architecture, backend_plan)`.
 3. Include strict JSON schema fields:
-   - `framework`
-   - `files`
-   - `validation_rules`
-   - `implementation_notes`
+   - `unit_tests`
+   - `api_tests`
+   - `edge_cases`
+   - `manual_checklist`
 4. Optional but impressive:
-   - `code_snippets`
-   - each snippet can have `file_path` and `content`.
+   - `coverage_notes`
+   - `risk_based_priorities`
 5. Wire into `backend/app/agent_outputs.py`.
 6. Preserve fallback behavior.
 7. Add smoke test assertions.
@@ -37,7 +37,6 @@ cd backend
 
 ## Later Milestones
 
-- Add real QA Agent.
 - Add real Reviewer Agent.
 - Add PostgreSQL persistence.
 - Add project history screen.
@@ -45,4 +44,3 @@ cd backend
 - Add deployment instructions.
 - Add README screenshots and a demo GIF.
 - Deploy frontend and backend.
-

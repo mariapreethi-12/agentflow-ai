@@ -61,6 +61,23 @@ ARCHITECTURE_SCHEMA = {
     "additionalProperties": False,
 }
 
+BACKEND_CODE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "framework": {"type": "string"},
+        "files": {"type": "array", "items": {"type": "string"}},
+        "validation_rules": {"type": "array", "items": {"type": "string"}},
+        "implementation_notes": {"type": "array", "items": {"type": "string"}},
+    },
+    "required": [
+        "framework",
+        "files",
+        "validation_rules",
+        "implementation_notes",
+    ],
+    "additionalProperties": False,
+}
+
 
 def is_openai_configured() -> bool:
     return bool(os.getenv("OPENAI_API_KEY"))
@@ -127,6 +144,29 @@ def generate_architecture_with_openai(
         return None
 
 
+def generate_backend_plan_with_openai(
+    idea: str,
+    answers: dict[int, str],
+    prd: dict[str, Any],
+    architecture: dict[str, Any],
+) -> dict[str, Any] | None:
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        return None
+
+    prompt = _build_backend_plan_prompt(idea, answers, prd, architecture)
+
+    try:
+        return _call_openai_json_schema(
+            api_key=api_key,
+            prompt=prompt,
+            schema_name="agentflow_backend_code_output",
+            schema=BACKEND_CODE_SCHEMA,
+        )
+    except httpx.HTTPError:
+        return None
+
+
 def _build_pm_prd_prompt(idea: str, answers: dict[int, str]) -> str:
     answer_lines = "\n".join(
         f"- Question {index}: {answer}" for index, answer in sorted(answers.items())
@@ -180,6 +220,45 @@ Return a practical engineering architecture with:
 4. One human approval gate before implementation.
 
 Keep it scoped to an MVP. Do not include deployment, auth provider setup, or advanced infrastructure unless essential.
+""".strip()
+
+
+def _build_backend_plan_prompt(
+    idea: str,
+    answers: dict[int, str],
+    prd: dict[str, Any],
+    architecture: dict[str, Any],
+) -> str:
+    answer_lines = "\n".join(
+        f"- Question {index}: {answer}" for index, answer in sorted(answers.items())
+    )
+
+    return f"""
+You are the Backend Engineer Agent for AgentFlow.
+
+Create an MVP backend implementation plan for this product idea:
+{idea}
+
+Product-owner answers:
+{answer_lines or "- No answers provided yet."}
+
+PRD context:
+Goal: {prd.get("goal", "No goal provided.")}
+Users: {", ".join(prd.get("users", []))}
+Acceptance criteria: {" | ".join(prd.get("acceptance_criteria", []))}
+
+Architecture context:
+Tables: {", ".join(architecture.get("tables", []))}
+API routes: {" | ".join(architecture.get("api_routes", []))}
+Services: {", ".join(architecture.get("services", []))}
+
+Return a practical FastAPI backend code plan with:
+1. The framework and persistence approach.
+2. Concrete file paths to generate.
+3. Validation rules the backend must enforce.
+4. Implementation notes for models, routes, services, and approval boundaries.
+
+Keep the plan scoped to the MVP. Do not claim that auth, deployment, or payment handling is already complete.
 """.strip()
 
 
