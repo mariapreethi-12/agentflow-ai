@@ -78,6 +78,18 @@ BACKEND_CODE_SCHEMA = {
     "additionalProperties": False,
 }
 
+QA_PLAN_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "unit_tests": {"type": "array", "items": {"type": "string"}},
+        "api_tests": {"type": "array", "items": {"type": "string"}},
+        "edge_cases": {"type": "array", "items": {"type": "string"}},
+        "manual_checklist": {"type": "array", "items": {"type": "string"}},
+    },
+    "required": ["unit_tests", "api_tests", "edge_cases", "manual_checklist"],
+    "additionalProperties": False,
+}
+
 
 def is_openai_configured() -> bool:
     return bool(os.getenv("OPENAI_API_KEY"))
@@ -162,6 +174,30 @@ def generate_backend_plan_with_openai(
             prompt=prompt,
             schema_name="agentflow_backend_code_output",
             schema=BACKEND_CODE_SCHEMA,
+        )
+    except httpx.HTTPError:
+        return None
+
+
+def generate_qa_plan_with_openai(
+    idea: str,
+    answers: dict[int, str],
+    prd: dict[str, Any],
+    architecture: dict[str, Any],
+    backend_plan: dict[str, Any],
+) -> dict[str, Any] | None:
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        return None
+
+    prompt = _build_qa_plan_prompt(idea, answers, prd, architecture, backend_plan)
+
+    try:
+        return _call_openai_json_schema(
+            api_key=api_key,
+            prompt=prompt,
+            schema_name="agentflow_qa_plan_output",
+            schema=QA_PLAN_SCHEMA,
         )
     except httpx.HTTPError:
         return None
@@ -259,6 +295,49 @@ Return a practical FastAPI backend code plan with:
 4. Implementation notes for models, routes, services, and approval boundaries.
 
 Keep the plan scoped to the MVP. Do not claim that auth, deployment, or payment handling is already complete.
+""".strip()
+
+
+def _build_qa_plan_prompt(
+    idea: str,
+    answers: dict[int, str],
+    prd: dict[str, Any],
+    architecture: dict[str, Any],
+    backend_plan: dict[str, Any],
+) -> str:
+    answer_lines = "\n".join(
+        f"- Question {index}: {answer}" for index, answer in sorted(answers.items())
+    )
+
+    return f"""
+You are the QA Engineer Agent for AgentFlow.
+
+Create an MVP QA plan for this product idea:
+{idea}
+
+Product-owner answers:
+{answer_lines or "- No answers provided yet."}
+
+PRD context:
+Goal: {prd.get("goal", "No goal provided.")}
+Acceptance criteria: {" | ".join(prd.get("acceptance_criteria", []))}
+
+Architecture context:
+Tables: {", ".join(architecture.get("tables", []))}
+API routes: {" | ".join(architecture.get("api_routes", []))}
+
+Backend plan context:
+Framework: {backend_plan.get("framework", "No framework provided.")}
+Files: {", ".join(backend_plan.get("files", []))}
+Validation rules: {" | ".join(backend_plan.get("validation_rules", []))}
+
+Return a practical QA plan with:
+1. Unit tests for services, validators, models, and state transitions.
+2. API tests for the generated routes.
+3. Edge cases tied to real product risk.
+4. Manual QA checklist steps a human reviewer can run during the demo.
+
+Keep this realistic for an MVP. Do not include unrelated enterprise testing or fake completed test results.
 """.strip()
 
 

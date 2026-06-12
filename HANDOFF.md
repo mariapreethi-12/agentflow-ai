@@ -29,6 +29,7 @@ Completed:
 - OpenAI-backed PM/PRD Agent.
 - OpenAI-backed Architect Agent.
 - OpenAI-backed Backend Code Plan Agent.
+- OpenAI-backed QA Plan Agent.
 - Deterministic fallback artifacts when OpenAI is unavailable.
 - Backend smoke test.
 - GitHub repo initialized and pushed.
@@ -48,10 +49,14 @@ Current real OpenAI agents:
   - Generates planned backend file paths.
   - Generates validation rules.
   - Generates implementation notes.
+- QA Plan Agent:
+  - Generates unit tests.
+  - Generates API tests.
+  - Generates edge cases.
+  - Generates manual QA checklist steps.
 
 Not completed yet:
 
-- QA Agent.
 - Reviewer Agent with real OpenAI output.
 - PostgreSQL persistence.
 - Auth.
@@ -69,7 +74,7 @@ Not completed yet:
 - `backend/app/schemas.py`: Pydantic models.
 - `backend/app/store.py`: in-memory project store.
 - `backend/app/agent_outputs.py`: artifact generation coordinator.
-- `backend/app/openai_agents.py`: OpenAI Responses API integrations for PM/PRD, Architect, and Backend Code Plan agents.
+- `backend/app/openai_agents.py`: OpenAI Responses API integrations for PM/PRD, Architect, Backend Code Plan, and QA Plan agents.
 - `backend/tests/smoke_test.py`: backend route smoke test.
 - `backend/.env.example`: environment variable template.
 
@@ -137,12 +142,13 @@ cd "C:\Users\maria\OneDrive\Documents\New project\agentflow-ai\backend"
 .venv\Scripts\python.exe -c "from pathlib import Path; import sys; sys.path.insert(0, str(Path.cwd())); from fastapi.testclient import TestClient; from app.main import app; c=TestClient(app); r=c.post('/projects', json={'idea':'Build an appointment booking system for a dental clinic with dentists, patients, reminders, and admin approval','answers':{'0':'Patients and staff can book','1':'Admins define availability','2':'No payment for MVP','3':'Email reminders','4':'Admins can override with audit reason'}}); data=r.json(); print('pm_source', data['artifacts']['prd']['data'].get('generation_source')); print('architecture_source', data['artifacts']['architecture']['data'].get('generation_source'))"
 ```
 
-Expected output after the backend-code-agent milestone:
+Expected output after the QA-agent milestone:
 
 ```text
 pm_source openai
 architecture_source openai
 backend_source openai
+qa_source openai
 ```
 
 If OpenAI is not configured or fails, expected fallback output:
@@ -184,18 +190,18 @@ architecture_source fallback
 
 ## Recommended Next Step
 
-Build the QA Agent.
+Build the Reviewer Agent.
 
 Suggested scope:
 
-- Add `QA_PLAN_SCHEMA` in `backend/app/openai_agents.py`.
-- Add `generate_qa_plan_with_openai(idea, answers, prd, architecture, backend_plan)`.
+- Add `REVIEW_REPORT_SCHEMA` in `backend/app/openai_agents.py`.
+- Add `generate_review_report_with_openai(idea, answers, prd, architecture, backend_plan, qa_plan)`.
 - The output should include:
-  - `unit_tests`
-  - `api_tests`
-  - `edge_cases`
-  - `manual_checklist`
-- Wire it in `backend/app/agent_outputs.py` for the `qa_plan` artifact.
+  - `score`
+  - `strengths`
+  - `risks`
+  - `recommendations`
+- Wire it in `backend/app/agent_outputs.py` for the `review_report` artifact.
 - Add `generation_source`.
 - Update `backend/tests/smoke_test.py`.
 - Run `npm run build` and backend smoke test.
@@ -206,5 +212,5 @@ Suggested scope:
 Use this prompt:
 
 ```text
-Continue the AgentFlow project from C:\Users\maria\OneDrive\Documents\New project\agentflow-ai. Read HANDOFF.md first. The repo is pushed to https://github.com/mariapreethi-12/agentflow-ai.git on main. Do not expose or print the OpenAI API key. The next milestone is to add the OpenAI QA Agent with structured output and deterministic fallback, then verify with frontend build and backend smoke test, commit, and push.
+Continue the AgentFlow project from C:\Users\maria\OneDrive\Documents\New project\agentflow-ai. Read HANDOFF.md first. The repo is pushed to https://github.com/mariapreethi-12/agentflow-ai.git on main. Do not expose or print the OpenAI API key. The next milestone is to add the OpenAI Reviewer Agent with structured output and deterministic fallback, then verify with frontend build and backend smoke test, commit, and push.
 ```

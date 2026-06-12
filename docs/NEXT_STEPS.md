@@ -2,26 +2,26 @@
 
 ## Immediate Next Milestone
 
-Add the OpenAI QA Agent.
+Add the OpenAI Reviewer Agent.
 
 Why this is next:
 
-- PM/PRD, Architect, and Backend Code Plan agents are already real OpenAI agents.
-- QA Agent makes the workflow feel more production-minded.
-- It is recruiter-visible because it can show tests, edge cases, and manual QA checks.
+- PM/PRD, Architect, Backend Code Plan, and QA Plan agents are already real OpenAI agents.
+- Reviewer Agent makes the workflow feel safer and more production-minded.
+- It is recruiter-visible because it can show risks, security concerns, missing validation, and improvement suggestions.
 
 ## Implementation Plan
 
-1. Add `QA_PLAN_SCHEMA` to `backend/app/openai_agents.py`.
-2. Add `generate_qa_plan_with_openai(idea, answers, prd, architecture, backend_plan)`.
+1. Add `REVIEW_REPORT_SCHEMA` to `backend/app/openai_agents.py`.
+2. Add `generate_review_report_with_openai(idea, answers, prd, architecture, backend_plan, qa_plan)`.
 3. Include strict JSON schema fields:
-   - `unit_tests`
-   - `api_tests`
-   - `edge_cases`
-   - `manual_checklist`
+   - `score`
+   - `strengths`
+   - `risks`
+   - `recommendations`
 4. Optional but impressive:
-   - `coverage_notes`
-   - `risk_based_priorities`
+   - `security_findings`
+   - `missing_tests`
 5. Wire into `backend/app/agent_outputs.py`.
 6. Preserve fallback behavior.
 7. Add smoke test assertions.
@@ -37,7 +37,6 @@ cd backend
 
 ## Later Milestones
 
-- Add real Reviewer Agent.
 - Add PostgreSQL persistence.
 - Add project history screen.
 - Add generated file viewer improvements.

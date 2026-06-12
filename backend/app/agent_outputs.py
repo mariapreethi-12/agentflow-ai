@@ -5,6 +5,7 @@ from app.openai_agents import (
     generate_architecture_with_openai,
     generate_backend_plan_with_openai,
     generate_pm_prd_with_openai,
+    generate_qa_plan_with_openai,
 )
 from app.schemas import Artifact
 
@@ -130,6 +131,39 @@ def generate_artifacts(idea: str, answers: dict[int, str]) -> dict[str, Artifact
             "generation_source": "fallback",
         }
     )
+    qa_plan_output = generate_qa_plan_with_openai(
+        idea, answers, prd_data, architecture_data, backend_plan_data
+    )
+    qa_plan_data = (
+        {
+            **qa_plan_output,
+            "generation_source": "openai",
+        }
+        if qa_plan_output
+        else {
+            "unit_tests": [
+                "Scheduling validator detects conflicts.",
+                "Appointment status transitions follow approval rules.",
+            ],
+            "api_tests": [
+                "POST /appointments succeeds for an open slot.",
+                "POST /appointments fails for duplicate slots.",
+                "PATCH /appointments/:id/status requires admin role.",
+            ],
+            "edge_cases": [
+                "Invalid email or phone number.",
+                "Appointment requested outside clinic hours.",
+                "Admin override without audit reason.",
+            ],
+            "manual_checklist": [
+                "Create patient.",
+                "Request booking.",
+                "Approve as admin.",
+                "Confirm reminder event is logged.",
+            ],
+            "generation_source": "fallback",
+        }
+    )
 
     return {
         "clarifying_questions": _artifact(
@@ -159,29 +193,8 @@ def generate_artifacts(idea: str, answers: dict[int, str]) -> dict[str, Artifact
         "qa_plan": _artifact(
             "qa_plan",
             "QA Test Cases",
-            89,
-            {
-                "unit_tests": [
-                    "Scheduling validator detects conflicts.",
-                    "Appointment status transitions follow approval rules.",
-                ],
-                "api_tests": [
-                    "POST /appointments succeeds for an open slot.",
-                    "POST /appointments fails for duplicate slots.",
-                    "PATCH /appointments/:id/status requires admin role.",
-                ],
-                "edge_cases": [
-                    "Invalid email or phone number.",
-                    "Appointment requested outside clinic hours.",
-                    "Admin override without audit reason.",
-                ],
-                "manual_checklist": [
-                    "Create patient.",
-                    "Request booking.",
-                    "Approve as admin.",
-                    "Confirm reminder event is logged.",
-                ],
-            },
+            92 if qa_plan_output else 89,
+            qa_plan_data,
         ),
         "review_report": _artifact(
             "review_report",
