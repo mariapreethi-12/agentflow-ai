@@ -22,7 +22,7 @@ The MVP focuses on a clear recruiter-friendly demo: a dental clinic appointment 
 - Pydantic schemas
 - TypeScript-ready JavaScript
 - Lucide icons
-- Future targets: PostgreSQL, LangGraph, OpenAI API
+- Future targets: LangGraph, deployment, auth
 
 ## Run Locally
 
@@ -48,6 +48,8 @@ API docs open at `http://127.0.0.1:8000/docs`.
 The frontend connects to the FastAPI backend at `http://127.0.0.1:8000` by default. If the backend is not running, the UI falls back to local storage so the demo still works.
 
 To enable real PM/PRD, Architecture, Backend Code Plan, QA Plan, and Review Report generation, copy `backend/.env.example` to `backend/.env` and set `OPENAI_API_KEY`. Without a key, AgentFlow uses deterministic fallback artifacts.
+
+The backend persists projects with SQLAlchemy. It uses local SQLite by default and can switch to PostgreSQL with `DATABASE_URL`.
 
 ## API Contract
 

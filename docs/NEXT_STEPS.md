@@ -2,24 +2,23 @@
 
 ## Immediate Next Milestone
 
-Add PostgreSQL persistence.
+Add deployment and demo polish.
 
 Why this is next:
 
-- The full core agent chain is now OpenAI-backed.
-- PostgreSQL makes projects survive backend restarts.
-- Persistence makes the app feel like a real product instead of a single-session demo.
+- The full core agent chain is OpenAI-backed.
+- Projects now persist locally through SQLAlchemy and SQLite.
+- A polished README/demo package will make the project easier to show recruiters.
 
 ## Implementation Plan
 
-1. Add SQLAlchemy and PostgreSQL dependencies.
-2. Create database models for projects, artifacts, and approvals.
-3. Replace the in-memory `ProjectStore` with a database-backed store.
-4. Add a local `DATABASE_URL` setting with a SQLite fallback if PostgreSQL is not configured.
-5. Preserve the existing API contract.
-6. Add persistence-focused smoke test assertions.
-7. Keep `.env` local-only and do not expose secrets.
-8. Run:
+1. Capture screenshots of the main workflow.
+2. Add README screenshots and a concise demo section.
+3. Create a short GIF/video showing idea input, approval gates, and OpenAI-generated artifacts.
+4. Add deployment notes for frontend and backend.
+5. Optionally add PostgreSQL production setup instructions with `DATABASE_URL`.
+6. Keep `.env` local-only and do not expose secrets.
+7. Run:
 
 ```powershell
 npm run build
@@ -27,12 +26,12 @@ cd backend
 .venv\Scripts\python.exe tests\smoke_test.py
 ```
 
-9. Commit and push.
+8. Commit and push.
 
 ## Later Milestones
 
-- Add project history screen.
 - Add generated file viewer improvements.
+- Add project history screen.
 - Add deployment instructions.
 - Add README screenshots and a demo GIF.
 - Deploy frontend and backend.

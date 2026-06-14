@@ -39,6 +39,14 @@ def main() -> None:
     assert "api_tests" in project["artifacts"]["qa_plan"]["data"]
     assert "risks" in project["artifacts"]["review_report"]["data"]
 
+    fetched = client.get(f"/projects/{project['id']}")
+    assert fetched.status_code == 200
+    assert fetched.json()["id"] == project["id"]
+
+    listed = client.get("/projects")
+    assert listed.status_code == 200
+    assert any(item["id"] == project["id"] for item in listed.json())
+
     approved = client.post(
         f"/projects/{project['id']}/approve",
         json={"stage": "prd", "note": "Scope approved."},

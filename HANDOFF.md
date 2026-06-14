@@ -7,7 +7,7 @@ Last updated: 2026-06-09
 - GitHub: https://github.com/mariapreethi-12/agentflow-ai.git
 - Local path: `C:\Users\maria\OneDrive\Documents\New project\agentflow-ai`
 - Branch: `main`
-- Latest pushed commit at previous handoff: `4dab919 Add OpenAI architect agent`
+- Latest pushed commit before persistence milestone: `1019886 Add OpenAI reviewer agent`
 - Working tree status at handoff: clean, `main...origin/main`
 
 ## Project Goal
@@ -31,6 +31,7 @@ Completed:
 - OpenAI-backed Backend Code Plan Agent.
 - OpenAI-backed QA Plan Agent.
 - OpenAI-backed Reviewer Agent.
+- SQLAlchemy persistence with local SQLite default.
 - Deterministic fallback artifacts when OpenAI is unavailable.
 - Backend smoke test.
 - GitHub repo initialized and pushed.
@@ -63,7 +64,7 @@ Current real OpenAI agents:
 
 Not completed yet:
 
-- PostgreSQL persistence.
+- PostgreSQL production configuration.
 - Auth.
 - Deployment.
 - README screenshots.
@@ -77,7 +78,9 @@ Not completed yet:
 - `src/styles.css`: dashboard styling.
 - `backend/app/main.py`: FastAPI app and route definitions.
 - `backend/app/schemas.py`: Pydantic models.
-- `backend/app/store.py`: in-memory project store.
+- `backend/app/database.py`: SQLAlchemy engine/session setup with SQLite default and `DATABASE_URL` override.
+- `backend/app/db_models.py`: database models for projects, artifacts, and approvals.
+- `backend/app/store.py`: database-backed project store.
 - `backend/app/agent_outputs.py`: artifact generation coordinator.
 - `backend/app/openai_agents.py`: OpenAI Responses API integrations for PM/PRD, Architect, Backend Code Plan, QA Plan, and Reviewer agents.
 - `backend/tests/smoke_test.py`: backend route smoke test.
@@ -120,6 +123,7 @@ Required shape:
 ```env
 OPENAI_API_KEY=sk-proj-...
 OPENAI_MODEL=gpt-4o-mini
+DATABASE_URL=sqlite:///./agentflow.db
 ```
 
 Important: a previous API key was accidentally pasted visibly during setup. That old key should be treated as compromised and revoked. The current key must remain private and should never be pasted into chat, screenshots, commits, or logs.
@@ -196,16 +200,15 @@ architecture_source fallback
 
 ## Recommended Next Step
 
-Build database persistence.
+Build deployment and demo polish.
 
 Suggested scope:
 
-- Add SQLAlchemy and database settings.
-- Add persistence models for projects, artifacts, and approvals.
-- Replace the in-memory store with a database-backed store.
-- Preserve the current API contract.
-- Keep SQLite as a local fallback if PostgreSQL is not configured.
-- Update `backend/tests/smoke_test.py`.
+- Add README screenshots.
+- Add a short demo GIF or video.
+- Add production deployment notes for frontend and backend.
+- Optionally configure PostgreSQL via `DATABASE_URL` for a deployed backend.
+- Optionally add a project history view that reads persisted projects from `/projects`.
 - Run `npm run build` and backend smoke test.
 - Commit and push.
 
@@ -214,5 +217,5 @@ Suggested scope:
 Use this prompt:
 
 ```text
-Continue the AgentFlow project from C:\Users\maria\OneDrive\Documents\New project\agentflow-ai. Read HANDOFF.md first. The repo is pushed to https://github.com/mariapreethi-12/agentflow-ai.git on main. Do not expose or print the OpenAI API key. The next milestone is to add database persistence while preserving the current API contract, then verify with frontend build and backend smoke test, commit, and push.
+Continue the AgentFlow project from C:\Users\maria\OneDrive\Documents\New project\agentflow-ai. Read HANDOFF.md first. The repo is pushed to https://github.com/mariapreethi-12/agentflow-ai.git on main. Do not expose or print the OpenAI API key. The next milestone is deployment/demo polish: README screenshots, a demo GIF or video, and deployment notes. Verify with frontend build and backend smoke test, commit, and push.
 ```

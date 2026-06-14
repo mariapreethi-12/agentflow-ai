@@ -1,6 +1,7 @@
 node_modules/
 dist/
 backend/.venv/
+backend/agentflow.db
 __pycache__/
 *.pyc
 .env
