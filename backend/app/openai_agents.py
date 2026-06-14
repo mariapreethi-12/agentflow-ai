@@ -90,6 +90,18 @@ QA_PLAN_SCHEMA = {
     "additionalProperties": False,
 }
 
+REVIEW_REPORT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "score": {"type": "integer", "minimum": 0, "maximum": 100},
+        "strengths": {"type": "array", "items": {"type": "string"}},
+        "risks": {"type": "array", "items": {"type": "string"}},
+        "recommendations": {"type": "array", "items": {"type": "string"}},
+    },
+    "required": ["score", "strengths", "risks", "recommendations"],
+    "additionalProperties": False,
+}
+
 
 def is_openai_configured() -> bool:
     return bool(os.getenv("OPENAI_API_KEY"))
@@ -198,6 +210,33 @@ def generate_qa_plan_with_openai(
             prompt=prompt,
             schema_name="agentflow_qa_plan_output",
             schema=QA_PLAN_SCHEMA,
+        )
+    except httpx.HTTPError:
+        return None
+
+
+def generate_review_report_with_openai(
+    idea: str,
+    answers: dict[int, str],
+    prd: dict[str, Any],
+    architecture: dict[str, Any],
+    backend_plan: dict[str, Any],
+    qa_plan: dict[str, Any],
+) -> dict[str, Any] | None:
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        return None
+
+    prompt = _build_review_report_prompt(
+        idea, answers, prd, architecture, backend_plan, qa_plan
+    )
+
+    try:
+        return _call_openai_json_schema(
+            api_key=api_key,
+            prompt=prompt,
+            schema_name="agentflow_review_report_output",
+            schema=REVIEW_REPORT_SCHEMA,
         )
     except httpx.HTTPError:
         return None
@@ -338,6 +377,58 @@ Return a practical QA plan with:
 4. Manual QA checklist steps a human reviewer can run during the demo.
 
 Keep this realistic for an MVP. Do not include unrelated enterprise testing or fake completed test results.
+""".strip()
+
+
+def _build_review_report_prompt(
+    idea: str,
+    answers: dict[int, str],
+    prd: dict[str, Any],
+    architecture: dict[str, Any],
+    backend_plan: dict[str, Any],
+    qa_plan: dict[str, Any],
+) -> str:
+    answer_lines = "\n".join(
+        f"- Question {index}: {answer}" for index, answer in sorted(answers.items())
+    )
+
+    return f"""
+You are the Code Reviewer Agent for AgentFlow.
+
+Review this MVP software plan for product quality, backend risk, validation, security, and test coverage.
+
+Product idea:
+{idea}
+
+Product-owner answers:
+{answer_lines or "- No answers provided yet."}
+
+PRD context:
+Goal: {prd.get("goal", "No goal provided.")}
+Acceptance criteria: {" | ".join(prd.get("acceptance_criteria", []))}
+
+Architecture context:
+Tables: {", ".join(architecture.get("tables", []))}
+API routes: {" | ".join(architecture.get("api_routes", []))}
+Services: {", ".join(architecture.get("services", []))}
+
+Backend plan context:
+Framework: {backend_plan.get("framework", "No framework provided.")}
+Files: {", ".join(backend_plan.get("files", []))}
+Validation rules: {" | ".join(backend_plan.get("validation_rules", []))}
+
+QA plan context:
+Unit tests: {" | ".join(qa_plan.get("unit_tests", []))}
+API tests: {" | ".join(qa_plan.get("api_tests", []))}
+Edge cases: {" | ".join(qa_plan.get("edge_cases", []))}
+
+Return:
+1. A quality score from 0 to 100.
+2. Strengths.
+3. Risks, including security, validation, missing requirements, or missing tests.
+4. Recommendations that a human should review before implementation or deployment.
+
+Be concrete and production-minded. Do not claim the project is deployed, secure, or complete.
 """.strip()
 
 

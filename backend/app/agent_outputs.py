@@ -6,6 +6,7 @@ from app.openai_agents import (
     generate_backend_plan_with_openai,
     generate_pm_prd_with_openai,
     generate_qa_plan_with_openai,
+    generate_review_report_with_openai,
 )
 from app.schemas import Artifact
 
@@ -164,6 +165,34 @@ def generate_artifacts(idea: str, answers: dict[int, str]) -> dict[str, Artifact
             "generation_source": "fallback",
         }
     )
+    review_report_output = generate_review_report_with_openai(
+        idea, answers, prd_data, architecture_data, backend_plan_data, qa_plan_data
+    )
+    review_report_data = (
+        {
+            **review_report_output,
+            "generation_source": "openai",
+        }
+        if review_report_output
+        else {
+            "score": 82,
+            "strengths": [
+                "Clear approval gates.",
+                "Practical API boundaries.",
+                "Good demo scenario for recruiters.",
+            ],
+            "risks": [
+                "Auth is still a placeholder.",
+                "Reminder retry handling needs a real implementation.",
+            ],
+            "recommendations": [
+                "Add role checks before exposing admin actions.",
+                "Add rate limits to appointment creation before a public demo.",
+                "Track reminder delivery status.",
+            ],
+            "generation_source": "fallback",
+        }
+    )
 
     return {
         "clarifying_questions": _artifact(
@@ -199,24 +228,8 @@ def generate_artifacts(idea: str, answers: dict[int, str]) -> dict[str, Artifact
         "review_report": _artifact(
             "review_report",
             "Reviewer Report",
-            82,
-            {
-                "score": 82,
-                "strengths": [
-                    "Clear approval gates.",
-                    "Practical API boundaries.",
-                    "Good demo scenario for recruiters.",
-                ],
-                "risks": [
-                    "Auth is still a placeholder.",
-                    "Reminder retry handling needs a real implementation.",
-                ],
-                "recommendations": [
-                    "Add role checks before exposing admin actions.",
-                    "Add rate limits to appointment creation before a public demo.",
-                    "Track reminder delivery status.",
-                ],
-            },
+            review_report_data["score"],
+            review_report_data,
         ),
     }
 

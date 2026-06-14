@@ -30,6 +30,7 @@ Completed:
 - OpenAI-backed Architect Agent.
 - OpenAI-backed Backend Code Plan Agent.
 - OpenAI-backed QA Plan Agent.
+- OpenAI-backed Reviewer Agent.
 - Deterministic fallback artifacts when OpenAI is unavailable.
 - Backend smoke test.
 - GitHub repo initialized and pushed.
@@ -54,10 +55,14 @@ Current real OpenAI agents:
   - Generates API tests.
   - Generates edge cases.
   - Generates manual QA checklist steps.
+- Reviewer Agent:
+  - Generates quality score.
+  - Generates strengths.
+  - Generates risks.
+  - Generates recommendations.
 
 Not completed yet:
 
-- Reviewer Agent with real OpenAI output.
 - PostgreSQL persistence.
 - Auth.
 - Deployment.
@@ -74,7 +79,7 @@ Not completed yet:
 - `backend/app/schemas.py`: Pydantic models.
 - `backend/app/store.py`: in-memory project store.
 - `backend/app/agent_outputs.py`: artifact generation coordinator.
-- `backend/app/openai_agents.py`: OpenAI Responses API integrations for PM/PRD, Architect, Backend Code Plan, and QA Plan agents.
+- `backend/app/openai_agents.py`: OpenAI Responses API integrations for PM/PRD, Architect, Backend Code Plan, QA Plan, and Reviewer agents.
 - `backend/tests/smoke_test.py`: backend route smoke test.
 - `backend/.env.example`: environment variable template.
 
@@ -142,13 +147,14 @@ cd "C:\Users\maria\OneDrive\Documents\New project\agentflow-ai\backend"
 .venv\Scripts\python.exe -c "from pathlib import Path; import sys; sys.path.insert(0, str(Path.cwd())); from fastapi.testclient import TestClient; from app.main import app; c=TestClient(app); r=c.post('/projects', json={'idea':'Build an appointment booking system for a dental clinic with dentists, patients, reminders, and admin approval','answers':{'0':'Patients and staff can book','1':'Admins define availability','2':'No payment for MVP','3':'Email reminders','4':'Admins can override with audit reason'}}); data=r.json(); print('pm_source', data['artifacts']['prd']['data'].get('generation_source')); print('architecture_source', data['artifacts']['architecture']['data'].get('generation_source'))"
 ```
 
-Expected output after the QA-agent milestone:
+Expected output after the reviewer-agent milestone:
 
 ```text
 pm_source openai
 architecture_source openai
 backend_source openai
 qa_source openai
+review_source openai
 ```
 
 If OpenAI is not configured or fails, expected fallback output:
@@ -190,19 +196,15 @@ architecture_source fallback
 
 ## Recommended Next Step
 
-Build the Reviewer Agent.
+Build database persistence.
 
 Suggested scope:
 
-- Add `REVIEW_REPORT_SCHEMA` in `backend/app/openai_agents.py`.
-- Add `generate_review_report_with_openai(idea, answers, prd, architecture, backend_plan, qa_plan)`.
-- The output should include:
-  - `score`
-  - `strengths`
-  - `risks`
-  - `recommendations`
-- Wire it in `backend/app/agent_outputs.py` for the `review_report` artifact.
-- Add `generation_source`.
+- Add SQLAlchemy and database settings.
+- Add persistence models for projects, artifacts, and approvals.
+- Replace the in-memory store with a database-backed store.
+- Preserve the current API contract.
+- Keep SQLite as a local fallback if PostgreSQL is not configured.
 - Update `backend/tests/smoke_test.py`.
 - Run `npm run build` and backend smoke test.
 - Commit and push.
@@ -212,5 +214,5 @@ Suggested scope:
 Use this prompt:
 
 ```text
-Continue the AgentFlow project from C:\Users\maria\OneDrive\Documents\New project\agentflow-ai. Read HANDOFF.md first. The repo is pushed to https://github.com/mariapreethi-12/agentflow-ai.git on main. Do not expose or print the OpenAI API key. The next milestone is to add the OpenAI Reviewer Agent with structured output and deterministic fallback, then verify with frontend build and backend smoke test, commit, and push.
+Continue the AgentFlow project from C:\Users\maria\OneDrive\Documents\New project\agentflow-ai. Read HANDOFF.md first. The repo is pushed to https://github.com/mariapreethi-12/agentflow-ai.git on main. Do not expose or print the OpenAI API key. The next milestone is to add database persistence while preserving the current API contract, then verify with frontend build and backend smoke test, commit, and push.
 ```

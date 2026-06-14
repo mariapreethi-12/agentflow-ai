@@ -33,9 +33,11 @@ def main() -> None:
     assert "architecture" in project["artifacts"]
     assert "backend_plan" in project["artifacts"]
     assert "qa_plan" in project["artifacts"]
+    assert "review_report" in project["artifacts"]
     assert "tables" in project["artifacts"]["architecture"]["data"]
     assert "files" in project["artifacts"]["backend_plan"]["data"]
     assert "api_tests" in project["artifacts"]["qa_plan"]["data"]
+    assert "risks" in project["artifacts"]["review_report"]["data"]
 
     approved = client.post(
         f"/projects/{project['id']}/approve",
