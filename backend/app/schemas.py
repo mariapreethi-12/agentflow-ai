@@ -66,6 +66,9 @@ class BuildResult(BaseModel):
     output_dir: str
     files: list[str]
     run_command: str
+    app_url: str | None = None
+    pid: int | None = None
+    status: str = "built"
 
 
 class ProjectListItem(BaseModel):

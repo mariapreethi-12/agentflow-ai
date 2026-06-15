@@ -72,6 +72,10 @@ def main() -> None:
     assert "app/main.py" in build_data["files"]
     assert Path(build_data["output_dir"], "app", "main.py").exists()
 
+    run = client.post(f"/projects/{project['id']}/run")
+    assert run.status_code == 200
+    assert run.json()["app_url"].startswith("http://127.0.0.1:")
+
     print("backend smoke test passed")
 
 

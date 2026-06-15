@@ -238,6 +238,11 @@ h2 {
   border-color: #0b867c;
 }
 
+.primary-button.success {
+  background: #2f7d32;
+  border-color: #2f7d32;
+}
+
 .save-state {
   margin: 10px 0 0;
   color: #5f6d76;
@@ -523,6 +528,23 @@ input:focus {
   margin-top: 14px;
 }
 
+.quick-prompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.quick-prompts button {
+  min-height: 32px;
+  border: 1px solid #cdd9df;
+  border-radius: 999px;
+  background: #fff;
+  color: #34434b;
+  padding: 6px 10px;
+  font-weight: 800;
+}
+
 .file-actions {
   display: flex;
   gap: 10px;
@@ -556,6 +578,12 @@ input:focus {
   background: #fff;
   padding: 8px;
   color: #172026;
+}
+
+.build-result a {
+  color: #09675f;
+  font-weight: 900;
+  overflow-wrap: anywhere;
 }
 
 .file-list {

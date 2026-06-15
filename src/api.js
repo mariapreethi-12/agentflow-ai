@@ -71,6 +71,11 @@ export const agentFlowApi = {
       method: "POST",
     });
   },
+  async runProject(projectId) {
+    return request(`/projects/${projectId}/run`, {
+      method: "POST",
+    });
+  },
 };
 
 export function fromApiProject(project) {

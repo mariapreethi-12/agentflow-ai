@@ -304,6 +304,28 @@ function App() {
     }
   }
 
+  async function runRunnableApp() {
+    if (!project.backendProjectId) return;
+
+    try {
+      setSyncState({ mode: "saving", label: "Running app" });
+      let currentProject = project;
+      if (!generatedFiles.length) {
+        currentProject = await agentFlowApi.generateFiles(project.backendProjectId);
+        setProject((current) => ({ ...currentProject, activeStage: current.activeStage }));
+      }
+      const result = await agentFlowApi.runProject(currentProject.backendProjectId);
+      setBuildResult(result);
+      setSyncState({ mode: "online", label: "Generated app running" });
+    } catch {
+      setSyncState({ mode: "local", label: "Run failed" });
+    }
+  }
+
+  function useQuickPrompt(prompt) {
+    setChatInput(prompt);
+  }
+
   function commitProject(updater, options = {}) {
     setProject((current) => {
       const next = {
@@ -536,6 +558,17 @@ function App() {
                 </div>
               ))}
             </div>
+            <div className="quick-prompts">
+              <button onClick={() => useQuickPrompt("@backend build and run this app")}>
+                @backend build
+              </button>
+              <button onClick={() => useQuickPrompt("@qa what should I test?")}>
+                @qa tests
+              </button>
+              <button onClick={() => useQuickPrompt("@reviewer what are the risks?")}>
+                @reviewer risks
+              </button>
+            </div>
             <form className="chat-form" onSubmit={sendChatMessage}>
               <input
                 value={chatInput}
@@ -563,6 +596,10 @@ function App() {
                   <Play size={18} />
                   Build app
                 </button>
+                <button className="primary-button success" onClick={runRunnableApp}>
+                  <Play size={18} />
+                  Run app
+                </button>
                 <button className="icon-button" onClick={copySelectedFile} title="Copy selected file">
                   <Copy size={18} />
                 </button>
@@ -573,6 +610,11 @@ function App() {
                 <strong>Built at</strong>
                 <span>{buildResult.output_dir}</span>
                 <code>{buildResult.run_command}</code>
+                {buildResult.app_url && (
+                  <a href={buildResult.app_url} target="_blank" rel="noreferrer">
+                    Open running app: {buildResult.app_url}
+                  </a>
+                )}
               </div>
             )}
             <div className="file-workspace">

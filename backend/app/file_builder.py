@@ -27,7 +27,7 @@ def build_generated_files(project: Project) -> list[dict[str, str]]:
         {
             "path": "requirements.txt",
             "language": "text",
-            "content": "fastapi==0.115.6\nuvicorn[standard]==0.34.0\npydantic[email]==2.10.4\n",
+            "content": "fastapi==0.115.6\nuvicorn[standard]==0.34.0\npydantic==2.10.4\n",
         },
         {
             "path": "app/__init__.py",
@@ -137,12 +137,12 @@ class Appointment(BaseModel):
 
 
 def _schemas_py() -> str:
-    return '''from pydantic import BaseModel, EmailStr, Field
+    return '''from pydantic import BaseModel, Field
 
 
 class AppointmentCreate(BaseModel):
     patient_name: str = Field(min_length=1)
-    patient_email: EmailStr
+    patient_email: str = Field(min_length=3)
     dentist_name: str = Field(min_length=1)
     starts_at: str
 

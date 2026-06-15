@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.openai_agents import is_openai_configured, openai_model_name
-from app.project_builder import materialize_project
+from app.project_builder import materialize_project, run_project
 from app.schemas import (
     ApprovalRequest,
     BuildResult,
@@ -117,3 +117,18 @@ def build_project(project_id: str) -> BuildResult:
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
     return BuildResult(**materialize_project(project))
+
+
+@app.post("/projects/{project_id}/run", response_model=BuildResult)
+def run_generated_project(project_id: str) -> BuildResult:
+    project = store.get_project(project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    if not project.generated_files:
+        project = store.generate_files(project_id)
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+    try:
+        return BuildResult(**run_project(project))
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc

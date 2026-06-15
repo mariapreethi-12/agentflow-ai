@@ -35,6 +35,7 @@ Completed:
 - Human chat messages persisted with each project.
 - Generated runnable FastAPI starter files persisted with each project.
 - Generated files can be materialized to `backend/generated_apps/{project_id}` with the build endpoint.
+- Generated apps can be launched with the run endpoint on an available localhost port.
 - Deterministic fallback artifacts when OpenAI is unavailable.
 - Backend smoke test.
 - GitHub repo initialized and pushed.

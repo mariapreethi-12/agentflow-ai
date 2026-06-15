@@ -168,7 +168,7 @@ class ProjectStore:
                 messages.append(
                     {
                         "role": "assistant",
-                        "content": self._assistant_reply(payload.content, record.active_stage),
+                        "content": self._assistant_reply(payload.content, record),
                         "stage": record.active_stage,
                         "created_at": now,
                     }
@@ -283,11 +283,22 @@ class ProjectStore:
             }
         ]
 
-    def _assistant_reply(self, content: str, stage: str) -> str:
-        if "build" in content.lower() or "files" in content.lower():
-            return "I generated a runnable FastAPI starter in the Generated Files panel. Review the files before using them."
-        if "approve" in content.lower():
-            return f"I noted your approval intent for {stage}. Use the Approve step button to record the official gate."
+    def _assistant_reply(self, content: str, record: ProjectRecord) -> str:
+        lowered = content.lower()
+        stage = record.active_stage
+        file_count = len(record.generated_files or [])
+        if "run" in lowered or "launch" in lowered:
+            return "Use Run app to start the generated FastAPI app on its own localhost URL. I will keep the built app linked here."
+        if "build" in lowered or "files" in lowered:
+            return f"I have {file_count} generated files ready. Use Generate files, then Build app, then Run app to turn them into a live API."
+        if "approve" in lowered:
+            return f"I noted your approval intent for {stage}. Use Approve step to record the official human gate."
+        if "@backend" in lowered:
+            return "Backend Agent here: I can produce the FastAPI file plan, materialize files, and run the generated API locally."
+        if "@qa" in lowered:
+            return "QA Agent here: I will focus on route tests, validation edge cases, and manual demo checks."
+        if "@reviewer" in lowered:
+            return "Reviewer Agent here: I will flag security, validation, missing tests, and production-readiness risks."
         return f"I tagged this note to {stage}. I will keep the human context with the project as the workflow moves forward."
 
 
