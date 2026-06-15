@@ -30,6 +30,11 @@ def build_generated_files(project: Project) -> list[dict[str, str]]:
             "content": "fastapi==0.115.6\nuvicorn[standard]==0.34.0\npydantic[email]==2.10.4\n",
         },
         {
+            "path": "app/__init__.py",
+            "language": "python",
+            "content": "",
+        },
+        {
             "path": "app/main.py",
             "language": "python",
             "content": _main_py(project),
@@ -43,6 +48,11 @@ def build_generated_files(project: Project) -> list[dict[str, str]]:
             "path": "app/schemas.py",
             "language": "python",
             "content": _schemas_py(),
+        },
+        {
+            "path": "app/routes/__init__.py",
+            "language": "python",
+            "content": "",
         },
         {
             "path": "app/routes/appointments.py",

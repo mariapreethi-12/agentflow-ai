@@ -15,6 +15,7 @@ The MVP focuses on a clear recruiter-friendly demo: a dental clinic appointment 
 - Reviewer Agent scores quality and flags risks.
 - Human messages stay with the project through the chat panel.
 - Generated FastAPI starter files can be viewed from the runnable build panel.
+- Generated files can be materialized into a real local app folder with **Build app**.
 
 ## Tech Stack
 

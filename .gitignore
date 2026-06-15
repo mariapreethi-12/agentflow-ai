@@ -4,6 +4,7 @@ backend/.venv/
 backend/agentflow.db
 backend/agentflow.db-shm
 backend/agentflow.db-wal
+backend/generated_apps/
 __pycache__/
 *.pyc
 .env

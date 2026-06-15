@@ -66,6 +66,12 @@ def main() -> None:
     assert files.status_code == 200
     assert any(file["path"] == "requirements.txt" for file in files.json()["generated_files"])
 
+    build = client.post(f"/projects/{project['id']}/build")
+    assert build.status_code == 200
+    build_data = build.json()
+    assert "app/main.py" in build_data["files"]
+    assert Path(build_data["output_dir"], "app", "main.py").exists()
+
     print("backend smoke test passed")
 
 

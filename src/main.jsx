@@ -98,6 +98,7 @@ function App() {
   const [showSchema, setShowSchema] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [selectedFilePath, setSelectedFilePath] = useState("");
+  const [buildResult, setBuildResult] = useState(null);
   const [syncState, setSyncState] = useState({
     mode: "local",
     label: "Local mode",
@@ -283,6 +284,24 @@ function App() {
   async function copySelectedFile() {
     if (!selectedFile) return;
     await navigator.clipboard.writeText(selectedFile.content);
+  }
+
+  async function buildRunnableApp() {
+    if (!project.backendProjectId) return;
+
+    try {
+      setSyncState({ mode: "saving", label: "Building app" });
+      let currentProject = project;
+      if (!generatedFiles.length) {
+        currentProject = await agentFlowApi.generateFiles(project.backendProjectId);
+        setProject((current) => ({ ...currentProject, activeStage: current.activeStage }));
+      }
+      const result = await agentFlowApi.buildProject(currentProject.backendProjectId);
+      setBuildResult(result);
+      setSyncState({ mode: "online", label: "App built" });
+    } catch {
+      setSyncState({ mode: "local", label: "Build failed" });
+    }
   }
 
   function commitProject(updater, options = {}) {
@@ -540,11 +559,22 @@ function App() {
                   <Code2 size={18} />
                   Generate files
                 </button>
+                <button className="primary-button secondary" onClick={buildRunnableApp}>
+                  <Play size={18} />
+                  Build app
+                </button>
                 <button className="icon-button" onClick={copySelectedFile} title="Copy selected file">
                   <Copy size={18} />
                 </button>
               </div>
             </div>
+            {buildResult && (
+              <div className="build-result">
+                <strong>Built at</strong>
+                <span>{buildResult.output_dir}</span>
+                <code>{buildResult.run_command}</code>
+              </div>
+            )}
             <div className="file-workspace">
               <div className="file-list">
                 {generatedFiles.map((file) => (

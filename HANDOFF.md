@@ -34,6 +34,7 @@ Completed:
 - SQLAlchemy persistence with local SQLite default.
 - Human chat messages persisted with each project.
 - Generated runnable FastAPI starter files persisted with each project.
+- Generated files can be materialized to `backend/generated_apps/{project_id}` with the build endpoint.
 - Deterministic fallback artifacts when OpenAI is unavailable.
 - Backend smoke test.
 - GitHub repo initialized and pushed.

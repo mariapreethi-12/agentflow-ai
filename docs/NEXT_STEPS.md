@@ -9,6 +9,7 @@ Why this is next:
 - The full core agent chain is OpenAI-backed.
 - Projects now persist locally through SQLAlchemy and SQLite.
 - Projects now keep human chat messages and generated runnable backend files.
+- Generated backend files can be built into local folders under `backend/generated_apps/`.
 - A polished README/demo package will make the project easier to show recruiters.
 
 ## Implementation Plan

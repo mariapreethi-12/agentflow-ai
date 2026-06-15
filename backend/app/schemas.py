@@ -62,6 +62,12 @@ class ChatMessageCreate(BaseModel):
     stage: StageId | None = None
 
 
+class BuildResult(BaseModel):
+    output_dir: str
+    files: list[str]
+    run_command: str
+
+
 class ProjectListItem(BaseModel):
     id: str
     name: str
