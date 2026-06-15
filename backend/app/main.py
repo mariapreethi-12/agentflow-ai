@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -21,6 +23,12 @@ app = FastAPI(
     version="0.1.0",
 )
 
+
+def _frontend_origins() -> list[str]:
+    origins = os.getenv("FRONTEND_ORIGINS", "")
+    return [origin.strip() for origin in origins.split(",") if origin.strip()]
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -28,6 +36,7 @@ app.add_middleware(
         "http://127.0.0.1:5174",
         "http://localhost:5173",
         "http://localhost:5174",
+        *_frontend_origins(),
     ],
     allow_credentials=True,
     allow_methods=["*"],

@@ -55,6 +55,10 @@ To enable real PM/PRD, Architecture, Backend Code Plan, QA Plan, and Review Repo
 
 The backend persists projects with SQLAlchemy. It uses local SQLite by default and can switch to PostgreSQL with `DATABASE_URL`.
 
+## Deploy
+
+Use Render for the FastAPI backend and PostgreSQL database, then Vercel for the Vite frontend. See [DEPLOYMENT.md](DEPLOYMENT.md) for the exact environment variables and setup steps.
+
 ## API Contract
 
 - `GET /health`
@@ -64,6 +68,10 @@ The backend persists projects with SQLAlchemy. It uses local SQLite by default a
 - `GET /projects/{project_id}`
 - `PATCH /projects/{project_id}`
 - `POST /projects/{project_id}/approve`
+- `POST /projects/{project_id}/chat`
+- `POST /projects/{project_id}/generate-files`
+- `POST /projects/{project_id}/build`
+- `POST /projects/{project_id}/run`
 
 ## Portfolio Angle
 

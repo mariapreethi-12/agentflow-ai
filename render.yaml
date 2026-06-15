@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: agentflow-ai-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.3
+      - key: DATABASE_URL
+        fromDatabase:
+          name: agentflow-ai-db
+          property: connectionString
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: FRONTEND_ORIGINS
+        sync: false
+
+databases:
+  - name: agentflow-ai-db
+    databaseName: agentflow
+    user: agentflow
