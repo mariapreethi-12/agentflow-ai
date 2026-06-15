@@ -49,6 +49,23 @@ export const agentFlowApi = {
     });
     return fromApiProject(updated);
   },
+  async addChatMessage(projectId, message) {
+    const updated = await request(`/projects/${projectId}/chat`, {
+      method: "POST",
+      body: JSON.stringify({
+        role: message.role || "human",
+        content: message.content,
+        stage: message.stage,
+      }),
+    });
+    return fromApiProject(updated);
+  },
+  async generateFiles(projectId) {
+    const updated = await request(`/projects/${projectId}/generate-files`, {
+      method: "POST",
+    });
+    return fromApiProject(updated);
+  },
 };
 
 export function fromApiProject(project) {
@@ -81,6 +98,8 @@ export function fromApiProject(project) {
         },
       ])
     ),
+    chatMessages: project.chat_messages || [],
+    generatedFiles: project.generated_files || [],
     createdAt: project.created_at,
     updatedAt: project.updated_at,
   };
@@ -99,6 +118,8 @@ function toProjectUpdate(project) {
     name: project.name,
     idea: project.idea,
     answers: project.answers,
+    chat_messages: project.chatMessages,
+    generated_files: project.generatedFiles,
     active_stage: project.activeStage,
   };
 }

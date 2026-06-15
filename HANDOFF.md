@@ -32,6 +32,8 @@ Completed:
 - OpenAI-backed QA Plan Agent.
 - OpenAI-backed Reviewer Agent.
 - SQLAlchemy persistence with local SQLite default.
+- Human chat messages persisted with each project.
+- Generated runnable FastAPI starter files persisted with each project.
 - Deterministic fallback artifacts when OpenAI is unavailable.
 - Backend smoke test.
 - GitHub repo initialized and pushed.
@@ -69,6 +71,7 @@ Not completed yet:
 - Deployment.
 - README screenshots.
 - Demo GIF or video.
+- Full generated frontend app files.
 
 ## Key Files
 
@@ -81,6 +84,7 @@ Not completed yet:
 - `backend/app/database.py`: SQLAlchemy engine/session setup with SQLite default and `DATABASE_URL` override.
 - `backend/app/db_models.py`: database models for projects, artifacts, and approvals.
 - `backend/app/store.py`: database-backed project store.
+- `backend/app/file_builder.py`: deterministic runnable FastAPI starter file generator.
 - `backend/app/agent_outputs.py`: artifact generation coordinator.
 - `backend/app/openai_agents.py`: OpenAI Responses API integrations for PM/PRD, Architect, Backend Code Plan, QA Plan, and Reviewer agents.
 - `backend/tests/smoke_test.py`: backend route smoke test.
@@ -209,6 +213,7 @@ Suggested scope:
 - Add production deployment notes for frontend and backend.
 - Optionally configure PostgreSQL via `DATABASE_URL` for a deployed backend.
 - Optionally add a project history view that reads persisted projects from `/projects`.
+- Optionally extend generated files to include frontend React code.
 - Run `npm run build` and backend smoke test.
 - Commit and push.
 

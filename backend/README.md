@@ -36,5 +36,7 @@ DATABASE_URL=postgresql+psycopg://user:password@localhost:5432/agentflow
 - `GET /projects/{project_id}`
 - `PATCH /projects/{project_id}`
 - `POST /projects/{project_id}/approve`
+- `POST /projects/{project_id}/chat`
+- `POST /projects/{project_id}/generate-files`
 
 The API contract stays the same whether the backend uses local SQLite or PostgreSQL.

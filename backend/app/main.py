@@ -2,7 +2,14 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.openai_agents import is_openai_configured, openai_model_name
-from app.schemas import ApprovalRequest, Project, ProjectCreate, ProjectListItem, ProjectUpdate
+from app.schemas import (
+    ApprovalRequest,
+    ChatMessageCreate,
+    Project,
+    ProjectCreate,
+    ProjectListItem,
+    ProjectUpdate,
+)
 from app.store import store
 
 
@@ -77,6 +84,22 @@ def update_project(project_id: str, payload: ProjectUpdate) -> Project:
 @app.post("/projects/{project_id}/approve", response_model=Project)
 def approve_project_stage(project_id: str, payload: ApprovalRequest) -> Project:
     project = store.approve_stage(project_id, payload)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project
+
+
+@app.post("/projects/{project_id}/chat", response_model=Project)
+def add_project_chat_message(project_id: str, payload: ChatMessageCreate) -> Project:
+    project = store.add_chat_message(project_id, payload)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project
+
+
+@app.post("/projects/{project_id}/generate-files", response_model=Project)
+def generate_project_files(project_id: str) -> Project:
+    project = store.generate_files(project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     return project

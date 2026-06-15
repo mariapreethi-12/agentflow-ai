@@ -8,6 +8,7 @@ Why this is next:
 
 - The full core agent chain is OpenAI-backed.
 - Projects now persist locally through SQLAlchemy and SQLite.
+- Projects now keep human chat messages and generated runnable backend files.
 - A polished README/demo package will make the project easier to show recruiters.
 
 ## Implementation Plan
@@ -32,6 +33,7 @@ cd backend
 
 - Add generated file viewer improvements.
 - Add project history screen.
+- Add generated frontend React files.
 - Add deployment instructions.
 - Add README screenshots and a demo GIF.
 - Deploy frontend and backend.

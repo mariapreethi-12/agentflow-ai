@@ -13,6 +13,8 @@ The MVP focuses on a clear recruiter-friendly demo: a dental clinic appointment 
 - Backend Agent outlines FastAPI files and validation logic.
 - QA Agent generates test cases and manual QA checks.
 - Reviewer Agent scores quality and flags risks.
+- Human messages stay with the project through the chat panel.
+- Generated FastAPI starter files can be viewed from the runnable build panel.
 
 ## Tech Stack
 

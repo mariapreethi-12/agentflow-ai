@@ -6,10 +6,12 @@ from sqlalchemy.orm import Session, selectinload
 from app.agent_outputs import generate_artifacts
 from app.database import SessionLocal, init_db
 from app.db_models import ApprovalRecord, ArtifactRecord, ProjectRecord
+from app.file_builder import build_generated_files
 from app.schemas import (
     Approval,
     ApprovalRequest,
     Artifact,
+    ChatMessageCreate,
     Project,
     ProjectCreate,
     ProjectUpdate,
@@ -46,9 +48,11 @@ class ProjectStore:
                 )
             },
             artifacts=generate_artifacts(payload.idea, payload.answers),
+            chat_messages=self._initial_chat_messages(),
             created_at=now,
             updated_at=now,
         )
+        project.generated_files = build_generated_files(project)
 
         with SessionLocal() as session:
             record = self._create_record(project)
@@ -76,12 +80,19 @@ class ProjectStore:
                 record.answers = update["answers"]
             if "active_stage" in update:
                 record.active_stage = update["active_stage"]
+            if "chat_messages" in update:
+                record.chat_messages = update["chat_messages"]
+            if "generated_files" in update:
+                record.generated_files = update["generated_files"]
 
             if "idea" in update or "answers" in update:
                 record.artifacts.clear()
                 session.flush()
                 artifacts = generate_artifacts(record.idea, self._answers_from_record(record))
                 record.artifacts.extend(self._artifact_records(project_id, artifacts))
+                project_snapshot = self._to_project(record)
+                project_snapshot.artifacts = artifacts
+                record.generated_files = build_generated_files(project_snapshot)
 
             record.updated_at = datetime.now(timezone.utc)
             session.commit()
@@ -123,6 +134,50 @@ class ProjectStore:
             session.commit()
             return self._get_project(session, project_id)
 
+    def generate_files(self, project_id: str) -> Project | None:
+        with SessionLocal() as session:
+            record = self._get_record(session, project_id)
+            if not record:
+                return None
+
+            project = self._to_project(record)
+            record.generated_files = build_generated_files(project)
+            record.updated_at = datetime.now(timezone.utc)
+            session.commit()
+            return self._get_project(session, project_id)
+
+    def add_chat_message(
+        self, project_id: str, payload: ChatMessageCreate
+    ) -> Project | None:
+        with SessionLocal() as session:
+            record = self._get_record(session, project_id)
+            if not record:
+                return None
+
+            messages = list(record.chat_messages or [])
+            now = datetime.now(timezone.utc).isoformat()
+            messages.append(
+                {
+                    "role": payload.role,
+                    "content": payload.content,
+                    "stage": payload.stage or record.active_stage,
+                    "created_at": now,
+                }
+            )
+            if payload.role == "human":
+                messages.append(
+                    {
+                        "role": "assistant",
+                        "content": self._assistant_reply(payload.content, record.active_stage),
+                        "stage": record.active_stage,
+                        "created_at": now,
+                    }
+                )
+            record.chat_messages = messages
+            record.updated_at = datetime.now(timezone.utc)
+            session.commit()
+            return self._get_project(session, project_id)
+
     def _get_project(self, session: Session, project_id: str) -> Project:
         record = self._get_record(session, project_id)
         if not record:
@@ -145,6 +200,8 @@ class ProjectStore:
             name=project.name,
             idea=project.idea,
             answers=project.answers,
+            chat_messages=project.chat_messages,
+            generated_files=project.generated_files,
             active_stage=project.active_stage,
             created_at=project.created_at,
             updated_at=project.updated_at,
@@ -158,6 +215,8 @@ class ProjectStore:
             name=record.name,
             idea=record.idea,
             answers=self._answers_from_record(record),
+            chat_messages=record.chat_messages or [],
+            generated_files=record.generated_files or [],
             active_stage=record.active_stage,
             approvals={
                 approval.stage: Approval(
@@ -213,6 +272,23 @@ class ProjectStore:
             )
             for artifact_key, artifact in artifacts.items()
         ]
+
+    def _initial_chat_messages(self) -> list[dict[str, str]]:
+        return [
+            {
+                "role": "assistant",
+                "content": "I am ready. Tag me with a question or approve the next step when you want the agent team to continue.",
+                "stage": "intake",
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            }
+        ]
+
+    def _assistant_reply(self, content: str, stage: str) -> str:
+        if "build" in content.lower() or "files" in content.lower():
+            return "I generated a runnable FastAPI starter in the Generated Files panel. Review the files before using them."
+        if "approve" in content.lower():
+            return f"I noted your approval intent for {stage}. Use the Approve step button to record the official gate."
+        return f"I tagged this note to {stage}. I will keep the human context with the project as the workflow moves forward."
 
 
 store = ProjectStore()

@@ -13,6 +13,8 @@ class ProjectRecord(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     idea: Mapped[str] = mapped_column(Text, nullable=False)
     answers: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    chat_messages: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    generated_files: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     active_stage: Mapped[str] = mapped_column(String(32), nullable=False, default="intake")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

@@ -5,6 +5,7 @@ import {
   Check,
   ChevronRight,
   ClipboardCheck,
+  Copy,
   Code2,
   Database,
   FileJson,
@@ -14,6 +15,7 @@ import {
   Play,
   RefreshCcw,
   Save,
+  Send,
   ShieldCheck,
   Sparkles,
   TestTube2,
@@ -94,6 +96,8 @@ function loadProject() {
 function App() {
   const [project, setProject] = useState(loadProject);
   const [showSchema, setShowSchema] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [selectedFilePath, setSelectedFilePath] = useState("");
   const [syncState, setSyncState] = useState({
     mode: "local",
     label: "Local mode",
@@ -146,6 +150,10 @@ function App() {
   const currentArtifact = project.artifacts[activeStage.artifactKey];
   const schema = artifactSchemas[activeStage.artifactKey];
   const openRisks = project.artifacts.review_report.data.risks.length;
+  const generatedFiles = project.generatedFiles || [];
+  const chatMessages = project.chatMessages || [];
+  const selectedFile =
+    generatedFiles.find((file) => file.path === selectedFilePath) || generatedFiles[0];
 
   const lastSaved = useMemo(
     () =>
@@ -221,6 +229,60 @@ function App() {
     setProject(nextProject);
     setShowSchema(false);
     queueMicrotask(() => createBackendProject(nextProject));
+  }
+
+  async function sendChatMessage(event) {
+    event.preventDefault();
+    const content = chatInput.trim();
+    if (!content) return;
+
+    const localMessage = {
+      role: "human",
+      content,
+      stage: activeStage.id,
+      created_at: new Date().toISOString(),
+    };
+    setChatInput("");
+
+    if (!project.backendProjectId) {
+      commitProject((current) => ({
+        ...current,
+        chatMessages: [...(current.chatMessages || []), localMessage],
+      }));
+      return;
+    }
+
+    try {
+      setSyncState({ mode: "saving", label: "Sending chat" });
+      const synced = await agentFlowApi.addChatMessage(project.backendProjectId, localMessage);
+      setProject((current) => ({ ...synced, activeStage: current.activeStage }));
+      setSyncState({ mode: "online", label: "API synced" });
+    } catch {
+      setSyncState({ mode: "local", label: "Local fallback" });
+      setProject((current) => ({
+        ...current,
+        chatMessages: [...(current.chatMessages || []), localMessage],
+      }));
+    }
+  }
+
+  async function generateRunnableFiles() {
+    if (!project.backendProjectId) return;
+
+    try {
+      setSyncState({ mode: "saving", label: "Generating files" });
+      const synced = await agentFlowApi.generateFiles(project.backendProjectId);
+      setProject((current) => ({ ...synced, activeStage: current.activeStage }));
+      setSelectedFilePath(synced.generatedFiles?.[0]?.path || "");
+      setSyncState({ mode: "online", label: "Files generated" });
+    } catch {
+      setSyncState({ mode: "local", label: "Local fallback" });
+    }
+  }
+
+  async function copySelectedFile() {
+    if (!selectedFile) return;
+    await navigator.clipboard.writeText(selectedFile.content);
   }
 
   function commitProject(updater, options = {}) {
@@ -435,6 +497,71 @@ function App() {
               </button>
             );
           })}
+        </section>
+
+        <section className="builder-grid">
+          <section className="panel chat-panel">
+            <div className="panel-header">
+              <div>
+                <p className="eyebrow">Human chat</p>
+                <h2>Tag the agent team</h2>
+              </div>
+              <span className="status-pill">{activeStage.label}</span>
+            </div>
+            <div className="chat-log">
+              {chatMessages.map((message, index) => (
+                <div className={`chat-message ${message.role}`} key={`${message.created_at}-${index}`}>
+                  <strong>{message.role === "human" ? "You" : "AgentFlow"}</strong>
+                  <span>{message.content}</span>
+                  <small>{message.stage}</small>
+                </div>
+              ))}
+            </div>
+            <form className="chat-form" onSubmit={sendChatMessage}>
+              <input
+                value={chatInput}
+                onChange={(event) => setChatInput(event.target.value)}
+                placeholder={`Tag ${activeStage.agent}`}
+              />
+              <button className="icon-button selected" title="Send message">
+                <Send size={17} />
+              </button>
+            </form>
+          </section>
+
+          <section className="panel files-panel">
+            <div className="panel-header">
+              <div>
+                <p className="eyebrow">Runnable build</p>
+                <h2>Generated FastAPI files</h2>
+              </div>
+              <div className="file-actions">
+                <button className="primary-button" onClick={generateRunnableFiles}>
+                  <Code2 size={18} />
+                  Generate files
+                </button>
+                <button className="icon-button" onClick={copySelectedFile} title="Copy selected file">
+                  <Copy size={18} />
+                </button>
+              </div>
+            </div>
+            <div className="file-workspace">
+              <div className="file-list">
+                {generatedFiles.map((file) => (
+                  <button
+                    className={file.path === selectedFile?.path ? "active" : ""}
+                    key={file.path}
+                    onClick={() => setSelectedFilePath(file.path)}
+                  >
+                    {file.path}
+                  </button>
+                ))}
+              </div>
+              <pre className="code-viewer">
+                <code>{selectedFile?.content || "Click Generate files to create a runnable FastAPI starter app."}</code>
+              </pre>
+            </div>
+          </section>
         </section>
       </section>
     </main>

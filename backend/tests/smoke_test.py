@@ -38,6 +38,7 @@ def main() -> None:
     assert "files" in project["artifacts"]["backend_plan"]["data"]
     assert "api_tests" in project["artifacts"]["qa_plan"]["data"]
     assert "risks" in project["artifacts"]["review_report"]["data"]
+    assert any(file["path"] == "app/main.py" for file in project["generated_files"])
 
     fetched = client.get(f"/projects/{project['id']}")
     assert fetched.status_code == 200
@@ -53,6 +54,17 @@ def main() -> None:
     )
     assert approved.status_code == 200
     assert approved.json()["approvals"]["prd"]["approved"] is True
+
+    chat = client.post(
+        f"/projects/{project['id']}/chat",
+        json={"role": "human", "content": "Please keep this build runnable.", "stage": "backend"},
+    )
+    assert chat.status_code == 200
+    assert len(chat.json()["chat_messages"]) >= 2
+
+    files = client.post(f"/projects/{project['id']}/generate-files")
+    assert files.status_code == 200
+    assert any(file["path"] == "requirements.txt" for file in files.json()["generated_files"])
 
     print("backend smoke test passed")
 

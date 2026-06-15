@@ -33,6 +33,8 @@ class ProjectUpdate(BaseModel):
     idea: str | None = None
     answers: dict[int, str] | None = None
     active_stage: StageId | None = None
+    chat_messages: list[dict[str, Any]] | None = None
+    generated_files: list[dict[str, str]] | None = None
 
 
 class ApprovalRequest(BaseModel):
@@ -48,8 +50,16 @@ class Project(BaseModel):
     active_stage: StageId = "intake"
     approvals: dict[StageId, Approval] = Field(default_factory=dict)
     artifacts: dict[str, Artifact] = Field(default_factory=dict)
+    chat_messages: list[dict[str, Any]] = Field(default_factory=list)
+    generated_files: list[dict[str, str]] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class ChatMessageCreate(BaseModel):
+    role: Literal["human", "assistant"] = "human"
+    content: str
+    stage: StageId | None = None
 
 
 class ProjectListItem(BaseModel):

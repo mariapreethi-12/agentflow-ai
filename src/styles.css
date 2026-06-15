@@ -159,7 +159,8 @@ button {
 .topbar,
 .summary-strip,
 .content-grid,
-.timeline {
+.timeline,
+.builder-grid {
   width: min(1180px, 100%);
   margin: 0 auto;
 }
@@ -467,6 +468,106 @@ input:focus {
   box-shadow: inset 0 -3px 0 #0b867c;
 }
 
+.builder-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.8fr) minmax(420px, 1.2fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.chat-log {
+  max-height: 330px;
+  overflow: auto;
+  display: grid;
+  gap: 10px;
+  padding-right: 4px;
+}
+
+.chat-message {
+  border: 1px solid #e0e8ec;
+  border-radius: 8px;
+  padding: 12px;
+  background: #f9fbfc;
+  display: grid;
+  gap: 5px;
+}
+
+.chat-message.human {
+  background: #edf8f6;
+  border-color: #b9e7e0;
+}
+
+.chat-message strong {
+  color: #172026;
+}
+
+.chat-message span {
+  color: #34434b;
+  line-height: 1.35;
+}
+
+.chat-message small {
+  color: #6f7f88;
+  font-weight: 800;
+}
+
+.chat-form {
+  display: grid;
+  grid-template-columns: 1fr 42px;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.file-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.file-workspace {
+  display: grid;
+  grid-template-columns: minmax(170px, 0.4fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.file-list {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.file-list button {
+  min-height: 38px;
+  border: 1px solid #d5e0e6;
+  border-radius: 8px;
+  background: #f9fbfc;
+  color: #34434b;
+  padding: 8px 10px;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.file-list button.active {
+  border-color: #0b867c;
+  background: #dff9f5;
+  color: #09675f;
+  font-weight: 900;
+}
+
+.code-viewer {
+  min-height: 330px;
+  max-height: 520px;
+  overflow: auto;
+  margin: 0;
+  border-radius: 8px;
+  background: #111a20;
+  color: #e7f2f4;
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
 @media (max-width: 980px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -479,8 +580,13 @@ input:focus {
   .stage-list,
   .summary-strip,
   .content-grid,
-  .timeline {
+  .timeline,
+  .builder-grid {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .file-workspace {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -507,7 +613,13 @@ input:focus {
   .stage-list,
   .summary-strip,
   .content-grid,
-  .timeline {
+  .timeline,
+  .builder-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .file-actions,
+  .chat-form {
     grid-template-columns: 1fr;
   }
 }
