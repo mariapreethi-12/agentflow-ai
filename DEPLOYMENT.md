@@ -1,9 +1,9 @@
 # AgentFlow Deployment
 
-This repo is prepared for a simple portfolio deployment:
+This repo is prepared for a simple free portfolio deployment:
 
 - Backend API: Render
-- Database: Render PostgreSQL
+- Database: SQLite on Render's temporary filesystem
 - Frontend: Vercel
 
 Do not commit `.env` or your OpenAI API key.
@@ -21,7 +21,7 @@ OPENAI_MODEL=gpt-4o-mini
 FRONTEND_ORIGINS=https://your-vercel-app.vercel.app
 ```
 
-`DATABASE_URL` is wired from the Render PostgreSQL database in `render.yaml`.
+`DATABASE_URL` is set to `sqlite:////tmp/agentflow.db` in `render.yaml` to avoid paid database setup. This is enough for a portfolio demo, but project data can reset when the free service restarts.
 
 After deploy, verify:
 
@@ -64,3 +64,5 @@ Redeploy the backend.
 The deployed app is the main AgentFlow platform: multi-agent workflow, human approval gates, chat, generated files, and persisted projects.
 
 `Run app` launches a generated app on a local machine by starting a child FastAPI server on a local port. That is perfect for the laptop demo, but most hosted platforms do not expose random child-process ports publicly. For deployment, use the hosted AgentFlow workflow as the portfolio demo, and use local mode when you want to show the generated app actually running.
+
+For a production version, switch `DATABASE_URL` to a managed PostgreSQL provider such as Render Postgres or Supabase.
