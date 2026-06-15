@@ -1,3 +1,5 @@
+from html import escape
+
 from app.schemas import Project
 
 
@@ -94,7 +96,10 @@ uvicorn app.main:app --reload
 
 
 def _main_py(project: Project) -> str:
+    project_name = escape(project.name)
+    project_idea = escape(project.idea)
     return f'''from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 
 from app.routes.appointments import router as appointments_router
 
@@ -108,19 +113,208 @@ app = FastAPI(
 app.include_router(appointments_router)
 
 
-@app.get("/")
-def root() -> dict[str, object]:
-    return {{
-        "app": "{project.name}",
-        "status": "running",
-        "docs": "/docs",
-        "health": "/health",
-        "endpoints": [
-            "GET /appointments",
-            "POST /appointments",
-            "PATCH /appointments/{{appointment_id}}/status",
-        ],
+@app.get("/", response_class=HTMLResponse)
+def root() -> str:
+    return """<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{project_name}</title>
+  <style>
+    :root {{
+      color: #172026;
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+      background: #f4f7f8;
     }}
+    body {{
+      margin: 0;
+    }}
+    .shell {{
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }}
+    header {{
+      display: grid;
+      gap: 14px;
+      border-bottom: 1px solid #d7e1e5;
+      padding-bottom: 22px;
+    }}
+    h1 {{
+      margin: 0;
+      font-size: clamp(30px, 5vw, 56px);
+      line-height: 1;
+    }}
+    p {{
+      color: #51616a;
+      line-height: 1.6;
+      margin: 0;
+    }}
+    .status {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }}
+    .pill, a.pill {{
+      border: 1px solid #bfd1d7;
+      border-radius: 999px;
+      color: #17343a;
+      background: #fff;
+      padding: 8px 12px;
+      font-weight: 800;
+      text-decoration: none;
+    }}
+    .pill.ok {{
+      background: #e7f7ef;
+      border-color: #96d4b2;
+      color: #17613a;
+    }}
+    main {{
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 18px;
+      margin-top: 24px;
+    }}
+    section {{
+      background: #fff;
+      border: 1px solid #dce5e9;
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: 0 12px 30px rgba(21, 39, 48, 0.08);
+    }}
+    h2 {{
+      margin: 0 0 14px;
+      font-size: 20px;
+    }}
+    form {{
+      display: grid;
+      gap: 12px;
+    }}
+    label {{
+      display: grid;
+      gap: 6px;
+      color: #4b5a62;
+      font-weight: 800;
+      font-size: 13px;
+    }}
+    input, button {{
+      border-radius: 7px;
+      font: inherit;
+    }}
+    input {{
+      border: 1px solid #c7d4da;
+      padding: 11px 12px;
+    }}
+    button {{
+      border: 0;
+      background: #0b867c;
+      color: #fff;
+      font-weight: 900;
+      padding: 12px 14px;
+      cursor: pointer;
+    }}
+    .list {{
+      display: grid;
+      gap: 10px;
+    }}
+    .item {{
+      border: 1px solid #d7e1e5;
+      border-radius: 8px;
+      padding: 12px;
+      display: grid;
+      gap: 5px;
+    }}
+    .item strong {{
+      color: #0f2f36;
+    }}
+    .item small {{
+      color: #62717a;
+    }}
+    pre {{
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      background: #102027;
+      color: #dff8ef;
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 48px;
+    }}
+    @media (max-width: 780px) {{
+      main {{
+        grid-template-columns: 1fr;
+      }}
+    }}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <span class="pill ok">Generated app running</span>
+      <h1>{project_name}</h1>
+      <p>{project_idea}</p>
+      <div class="status">
+        <a class="pill" href="/docs">Open API docs</a>
+        <a class="pill" href="/health">Health check</a>
+        <span class="pill">GET /appointments</span>
+        <span class="pill">POST /appointments</span>
+      </div>
+    </header>
+    <main>
+      <section>
+        <h2>Create a booking</h2>
+        <form id="booking-form">
+          <label>Your name<input name="patient_name" value="Maria" /></label>
+          <label>Email<input name="patient_email" value="maria@example.com" /></label>
+          <label>Room or staff owner<input name="dentist_name" value="Study Room A" /></label>
+          <label>Start time<input name="starts_at" value="2026-07-01T09:00:00" /></label>
+          <button type="submit">Create booking</button>
+        </form>
+        <pre id="result">Ready.</pre>
+      </section>
+      <section>
+        <h2>Live bookings</h2>
+        <div class="list" id="bookings"></div>
+      </section>
+    </main>
+  </div>
+  <script>
+    const form = document.querySelector("#booking-form");
+    const result = document.querySelector("#result");
+    const bookings = document.querySelector("#bookings");
+
+    async function loadBookings() {{
+      const response = await fetch("/appointments");
+      const data = await response.json();
+      bookings.innerHTML = data.length
+        ? data.map((booking) => `
+          <div class="item">
+            <strong>#${{booking.id}} ${{booking.patient_name}}</strong>
+            <span>${{booking.dentist_name}} at ${{booking.starts_at}}</span>
+            <small>Status: ${{booking.status}}</small>
+          </div>
+        `).join("")
+        : "<p>No bookings yet. Create one from the form.</p>";
+    }}
+
+    form.addEventListener("submit", async (event) => {{
+      event.preventDefault();
+      const payload = Object.fromEntries(new FormData(form).entries());
+      const response = await fetch("/appointments", {{
+        method: "POST",
+        headers: {{"Content-Type": "application/json"}},
+        body: JSON.stringify(payload),
+      }});
+      const data = await response.json();
+      result.textContent = JSON.stringify(data, null, 2);
+      await loadBookings();
+    }});
+
+    loadBookings();
+  </script>
+</body>
+</html>"""
 
 
 @app.get("/health")
@@ -235,7 +429,7 @@ def test_health() -> None:
 def test_root() -> None:
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json()["status"] == "running"
+    assert "Generated app running" in response.text
 
 
 def test_create_appointment() -> None:
