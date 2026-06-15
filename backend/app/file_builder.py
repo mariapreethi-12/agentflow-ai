@@ -108,6 +108,21 @@ app = FastAPI(
 app.include_router(appointments_router)
 
 
+@app.get("/")
+def root() -> dict[str, object]:
+    return {{
+        "app": "{project.name}",
+        "status": "running",
+        "docs": "/docs",
+        "health": "/health",
+        "endpoints": [
+            "GET /appointments",
+            "POST /appointments",
+            "PATCH /appointments/{{appointment_id}}/status",
+        ],
+    }}
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {{"status": "ok"}}
@@ -215,6 +230,12 @@ client = TestClient(app)
 
 def test_health() -> None:
     assert client.get("/health").json() == {{"status": "ok"}}
+
+
+def test_root() -> None:
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json()["status"] == "running"
 
 
 def test_create_appointment() -> None:
