@@ -49,6 +49,16 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/")
+def root() -> dict[str, str]:
+    return {
+        "app": "AgentFlow API",
+        "status": "running",
+        "health": "/health",
+        "docs": "/docs",
+    }
+
+
 @app.get("/ai/status")
 def ai_status() -> dict[str, str | bool]:
     return {
